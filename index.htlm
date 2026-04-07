@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MEDIACO - Pointage</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <style>
+        body, html { 
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            overflow: hidden; background-color: #fbbc04; /* Jaune Mediaco */
+        }
+        iframe {
+            width: 100%; 
+            height: calc(100% + 45px); /* On agrandit pour compenser le décalage */
+            border: none;
+            margin-top: -45px; /* On cache le bandeau Google Apps Script */
+        }
+    </style>
+</head>
+<body>
+    <iframe src="https://script.google.com/macros/s/AKfycbzGAXq9rsjXwtNQbHxp1qz4bpYdiWTuf_jfbCLO72UKIKj0c36Mxz5qID9_iGl0Q1vC_A/exec"></iframe>
+</body>
+</html>
