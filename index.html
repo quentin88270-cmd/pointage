@@ -10,22 +10,82 @@
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
         body, html { 
             margin: 0; padding: 0; height: 100%; width: 100%;
-            overflow: hidden; background-color: #fbbc04; 
+            overflow: hidden; background-color: #fbbc04; /* Jaune Mediaco */
         }
+
+        /* L'iframe est cachée au début */
         iframe {
             width: 100%; 
             height: calc(100% + 45px); 
             border: none;
-            margin-top: -45px;  
+            margin-top: -45px;
+            display: none; 
+        }
+
+        /* Écran de chargement plein écran */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #fbbc04;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Animation de la roulette */
+        .loader {
+            border: 6px solid #fff;
+            border-top: 6px solid #000; /* Noir Mediaco */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <iframe src="https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec"></iframe>
+
+    <div id="splash-screen">
+        <div class="loader"></div>
+        <div class="loading-text">Chargement Mediaco...</div>
+    </div>
+
+    <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec" onload="hideLoader()"></iframe>
+
+    <script>
+        function hideLoader() {
+            // Cette fonction se déclenche UNIQUEMENT quand l'iframe a fini de charger
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('app-frame').style.display = 'block';
+        }
+
+        // Sécurité au cas où Google met trop de temps (15 sec max)
+        setTimeout(function() {
+            hideLoader();
+        }, 15000);
+    </script>
+
 </body>
 </html>
