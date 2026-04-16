@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MEDIACO - Pointage</title>
     
-    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
+    <link rel="apple-touch-icon" href="https://www.mediaco-groupe.com/favicon.ico">
     
-    <link rel="icon" type="image/png" sizes="192x192" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://www.mediaco-groupe.com/favicon.ico">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://www.mediaco-groupe.com/favicon.ico">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MEDIACO">
-
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="MEDIACO">
     <meta name="theme-color" content="#fbbc04">
 
     <link rel="manifest" href='data:application/manifest+json,{
@@ -27,16 +25,16 @@
         "theme_color": "#fbbc04",
         "icons": [
             {
-                "src": "https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png",
+                "src": "https://www.mediaco-groupe.com/favicon.ico",
                 "sizes": "192x192",
                 "type": "image/png",
-                "purpose": "any maskable"
+                "purpose": "any"
             },
             {
-                "src": "https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png",
+                "src": "https://www.mediaco-groupe.com/favicon.ico",
                 "sizes": "512x512",
                 "type": "image/png",
-                "purpose": "any maskable"
+                "purpose": "any"
             }
         ]
     }'>
@@ -46,16 +44,12 @@
             margin: 0; padding: 0; height: 100%; width: 100%;
             overflow: hidden; background-color: #fbbc04;
         }
-
-        /* L'iframe qui contient ton application Google Apps Script */
         iframe {
             width: 100%; 
             height: 100%; 
             border: none;
-            display: none; /* Masqué pendant le chargement */
+            display: none; 
         }
-
-        /* Splash Screen (Écran de chargement) */
         #splash-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -66,7 +60,6 @@
             align-items: center;
             z-index: 9999;
         }
-
         .loader {
             border: 6px solid #fff;
             border-top: 6px solid #000;
@@ -76,12 +69,10 @@
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         .loading-text {
             font-family: Arial, sans-serif;
             font-weight: bold;
@@ -103,12 +94,9 @@
 
     <script>
         function hideLoader() {
-            // Une fois l'iframe chargée, on cache le splash screen
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('app-frame').style.display = 'block';
         }
-
-        // Sécurité : Si après 15 secondes l'iframe n'a pas répondu, on force l'affichage
         setTimeout(function() {
             hideLoader();
         }, 15000);
