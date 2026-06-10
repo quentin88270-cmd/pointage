@@ -191,11 +191,10 @@ const VAPID_KEY = "BehXwNCHtFPGdHFkjJFREn6CV7dKL0yDamPxVjNWpNq9W1JnZ190x5CgecglO
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./firebase-messaging-sw.js')
         .then(function(reg) {
-            console.log('[FCM] SW enregistré:', reg.scope);
-            messaging.useServiceWorker(reg);
+            console.log('[FCM] ✅ SW enregistré:', reg.scope);
         })
         .catch(function(err) {
-            console.warn('[FCM] SW erreur:', err);
+            console.warn('[FCM] ⚠️ SW erreur:', err);
         });
 }
 
@@ -254,8 +253,23 @@ function obtenirEtEnvoyerToken() {
 
 window.addEventListener('load', function() {
     if (Notification.permission === 'granted') {
+        console.log('[FCM] Permission déjà accordée au chargement');
         setTimeout(obtenirEtEnvoyerToken, 3000);
+    } else {
+        console.log('[FCM] Permission:', Notification.permission);
     }
+    
+    // Debug : bouton pour forcer la génération du token
+    window.debugFCMToken = function() {
+        console.log('[DEBUG] Forçage du token...');
+        console.log('[DEBUG] Permission:', Notification.permission);
+        if (Notification.permission !== 'granted') {
+            console.warn('[DEBUG] Permission non accordée !');
+            return;
+        }
+        obtenirEtEnvoyerToken();
+    };
+    console.log('[DEBUG] Appelle window.debugFCMToken() pour forcer le token');
 });
 
 // ══════════════════════════════════
