@@ -226,17 +226,30 @@ function dismissNotifBanner() {
 }
 
 function obtenirEtEnvoyerToken() {
+    console.log('[FCM] 🚀 Début de getToken...');
     messaging.getToken({ vapidKey: VAPID_KEY })
         .then(function(token) {
-            if (!token) { console.warn('[FCM] Pas de token'); return; }
-            console.log('[FCM] Token obtenu:', token.substring(0, 20) + '...');
+            if (!token) { 
+                console.warn('[FCM] ❌ Pas de token généré'); 
+                return; 
+            }
+            console.log('[FCM] ✅ Token obtenu:', token.substring(0, 30) + '...');
             localStorage.setItem('fcm_token', token);
+            console.log('[FCM] ✅ Token sauvegardé dans localStorage');
+            
             var iframe = document.getElementById('app-frame');
+            console.log('[FCM] iframe:', iframe ? '✅ trouvée' : '❌ pas trouvée');
+            
             if (iframe && iframe.contentWindow) {
+                console.log('[FCM] 📤 Envoi du token via postMessage...');
                 iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
+                console.log('[FCM] ✅ postMessage envoyé');
             }
         })
-        .catch(function(err) { console.error('[FCM] getToken erreur:', err); });
+        .catch(function(err) { 
+            console.error('[FCM] ❌ getToken erreur:', err); 
+            console.error('[FCM] Détails:', err.message, err.code);
+        });
 }
 
 window.addEventListener('load', function() {
