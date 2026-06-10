@@ -189,9 +189,7 @@ const messaging = firebase.messaging();
 const VAPID_KEY = "BehXwNCHtFPGdHFkjJFREn6CV7dKL0yDamPxVjNWpNq9W1JnZ190x5CgecglOJ10n3iavfaoNaYGzs1RJflPz-A";
 
 if ('serviceWorker' in navigator) {
-    const swPath = window.location.pathname.includes('/pointage/') 
-        ? './firebase-messaging-sw.js'  // Dans /pointage/
-        : '/firebase-messaging-sw.js';   // À la racine
+    const swPath = './firebase-messaging-sw.js';
     
     navigator.serviceWorker.register(swPath)
         .then(function(reg) {
