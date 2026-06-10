@@ -239,9 +239,22 @@ function obtenirEtEnvoyerToken() {
     navigator.serviceWorker.ready.then(function(reg) {
         console.log('[FCM] SW prêt:', reg.scope);
         
+        // ⚠️ Supprimer l'ancien abonnement push (ancienne VAPID key en cache)
+        return reg.pushManager.getSubscription().then(function(sub) {
+            if (sub) {
+                console.log('[FCM] 🗑️ Ancien abonnement trouvé, suppression...');
+                return sub.unsubscribe().then(function() {
+                    console.log('[FCM] ✅ Ancien abonnement supprimé');
+                    return reg;
+                });
+            }
+            return reg;
+        });
+    })
+    .then(function(reg) {
         return messaging.getToken({ 
             vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: reg  // ← ON PASSE NOTRE SW !
+            serviceWorkerRegistration: reg
         });
     })
     .then(function(token) {
@@ -254,12 +267,20 @@ function obtenirEtEnvoyerToken() {
         console.log('[FCM] ✅ Token sauvegardé dans localStorage');
         
         var iframe = document.getElementById('app-frame');
-        console.log('[FCM] iframe:', iframe ? '✅ trouvée' : '❌ pas trouvée');
         
+        // 1. Tentative postMessage (souvent bloqué par sandbox Apps Script)
         if (iframe && iframe.contentWindow) {
-            console.log('[FCM] 📤 Envoi du token via postMessage...');
             iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
-            console.log('[FCM] ✅ postMessage envoyé');
+        }
+        
+        // 2. Méthode fiable : recharger l'iframe avec le token dans l'URL
+        // (une seule fois, avant connexion)
+        if (iframe && !localStorage.getItem('fcm_url_sent')) {
+            localStorage.setItem('fcm_url_sent', '1');
+            var baseSrc = iframe.src.split('?')[0].split('#')[0];
+            var sep = baseSrc.indexOf('?') === -1 ? '?' : '&';
+            console.log('[FCM] 🔄 Rechargement iframe avec token dans URL...');
+            iframe.src = baseSrc + sep + 'fcmtoken=' + encodeURIComponent(token);
         }
     })
     .catch(function(err) { 
