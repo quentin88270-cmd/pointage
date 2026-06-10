@@ -1,119 +1,119 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MEDIACO - Pointage</title>
-
-
 <link rel="manifest" href='data:application/manifest+json,{"name":"MEDIACO Pointage","short_name":"MEDIACO","start_url":"./","display":"standalone","background_color":"#fbbc04","theme_color":"#fbbc04","icons":[{"src":"https://www.mediaco-groupe.com/favicon.ico","sizes":"192x192","type":"image/png"},{"src":"https://www.mediaco-groupe.com/favicon.ico","sizes":"512x512","type":"image/png"}]}'>
-
 <link rel="apple-touch-icon" href="https://www.mediaco-groupe.com/favicon.ico">
 <link rel="icon" type="image/png" sizes="192x192" href="https://www.mediaco-groupe.com/favicon.ico">
 <link rel="icon" type="image/png" sizes="512x512" href="https://www.mediaco-groupe.com/favicon.ico">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MEDIACO">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fbbc04">
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+
 <style>
     body, html { 
         margin: 0; padding: 0; height: 100%; width: 100%;
         overflow: hidden; background-color: #000;
-        overflow: hidden; background-color: #fbbc04;
     }
     iframe {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        height: 100dvh;
-        width: 100%; 
-        height: 100%; 
-        border: none;
-        display: none;
-        display: none; 
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%; height: 100dvh;
+        border: none; display: none; 
     }
     #splash-screen {
-        position: fixed;
-@@ -58,191 +61,30 @@
-        letter-spacing: 2px;
-        font-size: 14px;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #fbbc04;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center; z-index: 9999;
     }
-</style>
+    .loader {
+        border: 6px solid #fff; border-top: 6px solid #000;
+        border-radius: 50%; width: 50px; height: 50px;
+        animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .loading-text {
+        font-family: Arial, sans-serif; font-weight: bold; color: #000;
+        text-transform: uppercase; letter-spacing: 2px; font-size: 14px;
+    }
 
     /* ── PWA Install Banner ── */
     #pwa-install-banner {
-        display: none;
-        position: fixed;
-        bottom: 1.5rem;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 99999;
-        width: calc(100% - 2rem);
-        max-width: 420px;
+        display: none; position: fixed; bottom: 1.5rem; left: 50%;
+        transform: translateX(-50%); z-index: 99999;
+        width: calc(100% - 2rem); max-width: 420px;
         font-family: Arial, sans-serif;
     }
     #pwa-install-banner .banner-inner {
         background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        border: 1px solid rgba(251,188,4,0.5);
-        border-radius: 18px;
-        padding: 1rem 1.2rem;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+        border: 1px solid rgba(251,188,4,0.5); border-radius: 18px;
+        padding: 1rem 1.2rem; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        display: flex; align-items: center; gap: 1rem;
     }
     .banner-logo { font-size: 2.2rem; flex-shrink: 0; }
     .banner-text { flex: 1; min-width: 0; }
     .banner-title { font-size: 0.95rem; color: #fbbc04; font-weight: 700; letter-spacing: 1px; }
     .banner-sub   { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
     .banner-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
-
     #pwa-install-btn {
-        background: #fbbc04; color: #000;
-        border: none; border-radius: 20px;
-        padding: 0.45rem 1rem; font-size: 0.8rem;
-        font-weight: 700; cursor: pointer; white-space: nowrap;
+        background: #fbbc04; color: #000; border: none; border-radius: 20px;
+        padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700;
+        cursor: pointer; white-space: nowrap;
     }
     #pwa-dismiss-btn {
-        background: none; border: none;
-        color: rgba(255,255,255,0.35);
+        background: none; border: none; color: rgba(255,255,255,0.35);
         font-size: 0.7rem; cursor: pointer; text-align: center;
     }
-
     #pwa-ios-hint {
-        display: none;
-        background: rgba(26,26,26,0.97);
-        border: 1px solid rgba(251,188,4,0.25);
-        border-radius: 12px;
-        padding: 0.9rem 1.1rem;
-        margin-top: 0.6rem;
-        font-size: 0.8rem;
-        color: rgba(255,255,255,0.75);
-        line-height: 1.8;
-        text-align: center;
+        display: none; background: rgba(26,26,26,0.97);
+        border: 1px solid rgba(251,188,4,0.25); border-radius: 12px;
+        padding: 0.9rem 1.1rem; margin-top: 0.6rem;
+        font-size: 0.8rem; color: rgba(255,255,255,0.75);
+        line-height: 1.8; text-align: center;
     }
     #pwa-ios-hint strong { color: #fbbc04; }
     .pwa-hint-btn {
         display: inline-block; margin-top: 0.5rem;
-        background: rgba(251,188,4,0.15);
-        border: 1px solid rgba(251,188,4,0.35);
+        background: rgba(251,188,4,0.15); border: 1px solid rgba(251,188,4,0.35);
         border-radius: 20px; padding: 0.3rem 1rem;
         font-size: 0.72rem; color: #fbbc04; cursor: pointer;
     }
     .pwa-hint-never {
         display: block; margin-top: 6px;
-        font-size: 0.65rem; color: rgba(255,255,255,0.25);
-        cursor: pointer;
+        font-size: 0.65rem; color: rgba(255,255,255,0.25); cursor: pointer;
+    }
+
+    /* ── Notif permission banner ── */
+    #notif-banner {
+        display: none; position: fixed; top: 1rem; left: 50%;
+        transform: translateX(-50%); z-index: 99998;
+        width: calc(100% - 2rem); max-width: 420px;
+        background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+        border: 1px solid rgba(251,188,4,0.4); border-radius: 14px;
+        padding: 0.9rem 1.1rem; font-family: Arial, sans-serif;
+        box-shadow: 0 6px 30px rgba(0,0,0,0.5); text-align: center;
+    }
+    #notif-banner p { margin: 0 0 0.6rem; color: white; font-size: 0.85rem; }
+    #notif-banner strong { color: #fbbc04; }
+    #notif-accept-btn {
+        background: #fbbc04; color: #000; border: none; border-radius: 20px;
+        padding: 0.45rem 1.2rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-right: 8px;
+    }
+    #notif-later-btn {
+        background: none; border: none; color: rgba(255,255,255,0.4);
+        font-size: 0.72rem; cursor: pointer;
     }
 </style>
 </head>
 <body>
-
 
 <div id="splash-screen">
     <div class="loader"></div>
@@ -146,95 +146,171 @@
         <span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>
     </div>
 </div>
-<iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec" onload="hideLoader()"></iframe>
+
+<!-- Notification permission banner -->
+<div id="notif-banner">
+    <p>🔔 <strong>Activer les notifications</strong><br>
+    Reçois une alerte si tu oublies de pointer !</p>
+    <button id="notif-accept-btn" onclick="demanderPermissionNotif()">✅ Activer</button>
+    <button id="notif-later-btn" onclick="dismissNotifBanner()">Plus tard</button>
+</div>
 
 <script>
-    // ── Splash screen ──
-    function hideLoader() {
-        document.getElementById('splash-screen').style.display = 'none';
-        document.getElementById('app-frame').style.display = 'block';
-    }
-    setTimeout(function() { hideLoader(); }, 15000);
-
-    // ── PWA Install ──
-    var _deferredInstall = null;
-
-    function isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
-    function isInStandaloneMode() {
-        return window.matchMedia('(display-mode: standalone)').matches
-            || window.navigator.standalone === true;
-    }
-
-    // Android Chrome : intercepter le prompt natif
-    window.addEventListener('beforeinstallprompt', function(e) {
-        e.preventDefault();
-        _deferredInstall = e;
-        setTimeout(showInstallBanner, 3000);
-    });
-
-    function showInstallBanner() {
-        if (isInStandaloneMode()) return;
-        if (localStorage.getItem('pwa_dismissed')) return;
-        var banner = document.getElementById('pwa-install-banner');
-        if (!banner) return;
-
-        if (isIOS()) {
-            banner.style.display = 'block';
-            document.getElementById('pwa-install-btn').style.display = 'none';
-            document.getElementById('pwa-ios-hint').style.display = 'block';
-        } else if (_deferredInstall) {
-            banner.style.display = 'block';
-        } else {
-            // Android sans prompt natif : instructions manuelles
-            banner.style.display = 'block';
-            document.getElementById('pwa-install-btn').style.display = 'none';
-            document.getElementById('pwa-ios-hint').innerHTML =
-                'Sur <strong>Android</strong> : appuie sur ⋮ <strong>Menu</strong><br>' +
-                'puis <strong>"Ajouter à l\'écran d\'accueil"</strong> ➕' +
-                '<br><span class="pwa-hint-btn" onclick="dismissPWA()">J\'ai compris ✓</span>' +
-                '<span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>';
-            document.getElementById('pwa-ios-hint').style.display = 'block';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bouton Installer Android natif
-        document.getElementById('pwa-install-btn').addEventListener('click', function() {
-            if (!_deferredInstall) return;
-            _deferredInstall.prompt();
-            _deferredInstall.userChoice.then(function(result) {
-                if (result.outcome === 'accepted') dismissPWAForever();
-                _deferredInstall = null;
-            });
-        });
-        document.getElementById('pwa-dismiss-btn').addEventListener('click', dismissPWAForever);
-
-        // iOS : afficher après 3s
-        if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('pwa_dismissed')) {
-            setTimeout(showInstallBanner, 3000);
-        }
-    });
+// ── Splash screen ──
+function hideLoader() {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('app-frame').style.display = 'block';
+    // Montrer le banner notif après 5s (si pas déjà refusé)
     setTimeout(function() {
-        hideLoader();
-    }, 15000);
-</script>
+        if (!localStorage.getItem('notif_asked') && Notification.permission === 'default') {
+            document.getElementById('notif-banner').style.display = 'block';
+        }
+    }, 5000);
+}
+setTimeout(function() { hideLoader(); }, 15000);
 
-    function dismissPWA() {
-        // Ferme pour cette session seulement
-        document.getElementById('pwa-install-banner').style.display = 'none';
-    }
-    function dismissPWAForever() {
-        // Ne plus jamais afficher
-        document.getElementById('pwa-install-banner').style.display = 'none';
-        localStorage.setItem('pwa_dismissed', '1');
-    }
+// ══════════════════════════════════
+// FIREBASE FCM
+// ══════════════════════════════════
+firebase.initializeApp({
+    apiKey: "AIzaSyDLjmeAbZEUNrskkn-THIFzY7d8Brk4nAI",
+    authDomain: "pointage-mediaco.firebaseapp.com",
+    projectId: "pointage-mediaco",
+    storageBucket: "pointage-mediaco.firebasestorage.app",
+    messagingSenderId: "123659872809",
+    appId: "1:123659872809:web:6d94c82b2585652899ca38",
+    measurementId: "G-C1JWK63LNJ"
+});
 
-    window.addEventListener('appinstalled', function() {
-        document.getElementById('pwa-install-banner').style.display = 'none';
-        localStorage.setItem('pwa_dismissed', '1');
+const messaging = firebase.messaging();
+const VAPID_KEY = "BehXwNCHtFPGdHFkjJFREn6CV7dKL0yDamPxVjNWpNq9W1JnZ190x5CgecglOJ10n3iavfaoNaYGzs1RJflPz-A";
+
+// Enregistrer le service worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(function(reg) {
+            console.log('[FCM] SW enregistré:', reg.scope);
+            messaging.useServiceWorker(reg);
+        })
+        .catch(function(err) {
+            console.warn('[FCM] SW erreur:', err);
+        });
+}
+
+// Message foreground (app ouverte)
+messaging.onMessage(function(payload) {
+    console.log('[FCM] Message foreground:', payload);
+    const title = (payload.notification && payload.notification.title) || 'MEDIACO';
+    const body  = (payload.notification && payload.notification.body)  || '';
+    if (Notification.permission === 'granted') {
+        new Notification(title, {
+            body: body,
+            icon: 'https://www.mediaco-groupe.com/favicon.ico'
+        });
+    }
+});
+
+function demanderPermissionNotif() {
+    dismissNotifBanner();
+    localStorage.setItem('notif_asked', '1');
+    Notification.requestPermission().then(function(permission) {
+        if (permission === 'granted') {
+            console.log('[FCM] Permission accordée');
+            obtenirEtEnvoyerToken();
+        } else {
+            console.log('[FCM] Permission refusée');
+        }
     });
+}
+
+function dismissNotifBanner() {
+    document.getElementById('notif-banner').style.display = 'none';
+}
+
+function obtenirEtEnvoyerToken() {
+    messaging.getToken({ vapidKey: VAPID_KEY })
+        .then(function(token) {
+            if (!token) { console.warn('[FCM] Pas de token'); return; }
+            console.log('[FCM] Token obtenu:', token.substring(0, 20) + '...');
+            localStorage.setItem('fcm_token', token);
+            // Envoyer le token à l'app Apps Script via postMessage
+            var iframe = document.getElementById('app-frame');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
+            }
+        })
+        .catch(function(err) { console.error('[FCM] getToken erreur:', err); });
+}
+
+// Si déjà autorisé → récupérer le token directement
+window.addEventListener('load', function() {
+    if (Notification.permission === 'granted') {
+        setTimeout(obtenirEtEnvoyerToken, 3000);
+    }
+});
+
+// ══════════════════════════════════
+// PWA Install
+// ══════════════════════════════════
+var _deferredInstall = null;
+
+function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; }
+function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault(); _deferredInstall = e;
+    setTimeout(showInstallBanner, 3000);
+});
+
+function showInstallBanner() {
+    if (isStandalone()) return;
+    if (localStorage.getItem('pwa_dismissed')) return;
+    var banner = document.getElementById('pwa-install-banner');
+    if (!banner) return;
+    if (isIOS()) {
+        banner.style.display = 'block';
+        document.getElementById('pwa-install-btn').style.display = 'none';
+        document.getElementById('pwa-ios-hint').style.display = 'block';
+    } else if (_deferredInstall) {
+        banner.style.display = 'block';
+    } else {
+        banner.style.display = 'block';
+        document.getElementById('pwa-install-btn').style.display = 'none';
+        document.getElementById('pwa-ios-hint').innerHTML =
+            'Sur <strong>Android</strong> : appuie sur ⋮ <strong>Menu</strong><br>' +
+            'puis <strong>"Ajouter à l'écran d'accueil"</strong> ➕' +
+            '<br><span class="pwa-hint-btn" onclick="dismissPWA()">J'ai compris ✓</span>' +
+            '<span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>';
+        document.getElementById('pwa-ios-hint').style.display = 'block';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('pwa-install-btn').addEventListener('click', function() {
+        if (!_deferredInstall) return;
+        _deferredInstall.prompt();
+        _deferredInstall.userChoice.then(function(r) {
+            if (r.outcome === 'accepted') dismissPWAForever();
+            _deferredInstall = null;
+        });
+    });
+    document.getElementById('pwa-dismiss-btn').addEventListener('click', dismissPWAForever);
+    if (isIOS() && !isStandalone() && !localStorage.getItem('pwa_dismissed')) {
+        setTimeout(showInstallBanner, 3000);
+    }
+});
+
+function dismissPWA() { document.getElementById('pwa-install-banner').style.display = 'none'; }
+function dismissPWAForever() {
+    document.getElementById('pwa-install-banner').style.display = 'none';
+    localStorage.setItem('pwa_dismissed', '1');
+}
+window.addEventListener('appinstalled', function() {
+    document.getElementById('pwa-install-banner').style.display = 'none';
+    localStorage.setItem('pwa_dismissed', '1');
+});
 </script>
 </body>
 </html>
