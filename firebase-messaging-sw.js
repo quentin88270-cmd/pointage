@@ -12,21 +12,33 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ── Notification reçue en arrière-plan (app fermée / onglet inactif)
+// Notif background ET foreground (data-only payload)
+// Un seul endroit affiche la notif → plus de doublon
 messaging.onBackgroundMessage(function(payload) {
-  console.log('[SW MEDIACO] Message background:', payload);
-  const title = (payload.notification && payload.notification.title) || 'MEDIACO';
-  const body  = (payload.notification && payload.notification.body)  || '';
-  self.registration.showNotification(title, {
-    body:    body,
-    icon:    'https://www.mediaco-groupe.com/favicon.ico',
-    badge:   'https://www.mediaco-groupe.com/favicon.ico',
-    tag:     'mediaco-notif',
-    vibrate: [200, 100, 200]
+  console.log('[SW MEDIACO] Message reçu:', payload);
+
+  // Lire depuis data (payload data-only) ou notification (fallback)
+  const title = (payload.data && payload.data.title)
+    || (payload.notification && payload.notification.title)
+    || 'MEDIACO';
+  const body = (payload.data && payload.data.body)
+    || (payload.notification && payload.notification.body)
+    || '';
+  const icon = (payload.data && payload.data.icon)
+    || './icon-192.png';
+
+  return self.registration.showNotification(title, {
+    body:     body,
+    icon:     icon,
+    badge:    './icon-192.png',
+    tag:      'mediaco-notif',   // même tag = remplace au lieu de doubler
+    renotify: true,
+    vibrate:  [200, 100, 200],
+    data:     { url: '/pointage/' }
   });
 });
 
-// ── Clic sur la notification → ouvre l'app
+// Clic sur la notification → ouvre l'app
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   event.waitUntil(
@@ -34,7 +46,7 @@ self.addEventListener('notificationclick', function(event) {
       for (const client of list) {
         if (client.url.includes('mediaco') && 'focus' in client) return client.focus();
       }
-      return clients.openWindow('/');
+      return clients.openWindow('/pointage/');
     })
   );
 });
