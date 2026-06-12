@@ -100,7 +100,9 @@ function hideLoader() {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('app-frame').style.display = 'block';
     setTimeout(function() {
-        if (!localStorage.getItem('notif_asked') && Notification.permission === 'default') {
+        // Attendre que l'utilisateur soit connecté (PIN présent) avant de demander les notifs
+        const pinConnecte = localStorage.getItem('mediaco_pin');
+        if (pinConnecte && !localStorage.getItem('notif_asked') && Notification.permission === 'default') {
             document.getElementById('notif-banner').style.display = 'block';
         }
     }, 5000);
@@ -259,12 +261,22 @@ function isStandalone() {
 
 window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault(); _deferredInstall = e;
-    setTimeout(showInstallBanner, 3000);
+    // Vérifier toutes les 2s si le PIN est connecté, puis afficher
+    var checkPin = setInterval(function() {
+        if (localStorage.getItem('mediaco_pin')) {
+            clearInterval(checkPin);
+            setTimeout(showInstallBanner, 2000);
+        }
+    }, 2000);
+    // Timeout max 5 minutes
+    setTimeout(function() { clearInterval(checkPin); }, 300000);
 });
 
 function showInstallBanner() {
     if (isStandalone()) return;
     if (localStorage.getItem('pwa_dismissed')) return;
+    // Ne pas afficher si pas encore connecté
+    if (!localStorage.getItem('mediaco_pin')) return;
     var banner = document.getElementById('pwa-install-banner');
     if (!banner) return;
     if (isIOS()) {
@@ -295,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     document.getElementById('pwa-dismiss-btn').addEventListener('click', dismissPWAForever);
-    if (isIOS() && !isStandalone() && !localStorage.getItem('pwa_dismissed')) {
+    if (isIOS() && !isStandalone() && !localStorage.getItem('pwa_dismissed') && localStorage.getItem('mediaco_pin')) {
         setTimeout(showInstallBanner, 3000);
     }
 });
