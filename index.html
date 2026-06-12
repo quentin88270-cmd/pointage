@@ -212,15 +212,13 @@ function envoyerTokenFCMauServeur(token) {
     var img = new Image();
     img.onload = function() { afficherDebug('✅ Token envoyé (img)'); };
     img.onerror = function() {
-        // Normal — Apps Script renvoie JSON pas une image, mais la requête passe quand même
-        afficherDebug('✅ Requête envoyée (vérifier col G)');
         localStorage.removeItem('pending_fcm_token_github');
     };
     img.src = url;
-    // Aussi tenter fetch no-cors
+    // Fetch no-cors
     fetch(url, { method: 'GET', mode: 'no-cors' })
-      .then(function() { afficherDebug('✅ Fetch no-cors envoyé'); localStorage.removeItem('pending_fcm_token_github'); })
-      .catch(function(err) { afficherDebug('⚠️ Fetch: ' + err.message); });
+      .then(function() { localStorage.removeItem('pending_fcm_token_github'); })
+      .catch(function(err) { console.log('[FCM] Fetch erreur:', err.message); });
 }
 
 // Recevoir le PIN depuis l'iframe Apps Script
@@ -236,16 +234,16 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Vérifier toutes les 2s si PIN disponible dans localStorage GitHub
-// (le PIN est copié ici lors de la connexion via INDEX_STABLE → postMessage)
-setInterval(function() {
+// Vérifier toutes les 5s si PIN disponible + token en attente
+// S'arrête dès que l'envoi réussit
+var _fcmRetryInterval = setInterval(function() {
     const pin = localStorage.getItem('mediaco_pin_github');
     const pending = localStorage.getItem('pending_fcm_token_github');
     if (pin && pending) {
-        afficherDebug('⏰ Interval: PIN trouvé, envoi token...');
+        clearInterval(_fcmRetryInterval);
         envoyerTokenFCMauServeur(pending);
     }
-}, 2000);
+}, 5000);
 
 function obtenirEtEnvoyerToken() {
     afficherDebug('🚀 Génération token FCM...');
@@ -268,11 +266,9 @@ function obtenirEtEnvoyerToken() {
     .then(function(token) {
         if (!token) { afficherDebug('❌ Pas de token généré'); return; }
         afficherDebug('✅ Token: ' + token.substring(0, 25) + '...');
+        // Toujours mettre à jour le token (il peut avoir changé/expiré)
         localStorage.setItem('fcm_token', token);
-
-        // Stocker le token localement et tenter envoi si PIN connu
         localStorage.setItem('pending_fcm_token_github', token);
-        afficherDebug('💾 Token stocké localement');
         envoyerTokenFCMauServeur(token);
     })
     .catch(function(err) {
