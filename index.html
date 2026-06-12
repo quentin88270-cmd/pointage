@@ -1,367 +1,1274 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MEDIACO - Pointage</title>
-
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MEDIACO">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#fbbc04">
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-
-<style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body, html {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MEDIACO - Pointage</title>
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MEDIACO">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="MEDIACO">
+  <meta name="theme-color" content="#fbbc04">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"MEDIACO POINTAGE","short_name":"MEDIACO","start_url":"/","display":"standalone","background_color":"#ffffff","theme_color":"#fbbc04","icons":[{"src":"https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png","sizes":"192x192","type":"image/png"},{"src":"https://upload.wikimedia.org/wikipedia/fr/0/0e/Logo_Mediaco.png","sizes":"512x512","type":"image/png"}]}'>
+  <style>
+    #clientsContainer .client-block:first-child button[onclick*="client"] { display: none !important; }
+    #horairesContainer .horaire-block:first-child button[onclick*="horaire"] { display: none !important; }
+    :root { --mediaco-yellow: #FFD700; --mediaco-black: #1a1a1a; --mediaco-gray: #f4f4f4; --success-green: #28a745; --danger-red: #dc3545; }
+    html, body {
+        height: 100%;
         margin: 0; padding: 0;
-        width: 100%; height: 100%;
-        overflow: hidden;
-        /* Couleur de fond = couleur de la nav MEDIACO pour combler les safe-areas */
-        background-color: #1a1a1a;
     }
-    iframe {
-        position: fixed;
-        /* Couvre TOUT l'écran y compris safe-areas */
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        /* Utilise dvh pour couvrir jusqu'en bas sur iPhone */
-        height: 100dvh;
-        border: none;
-        display: none;
-        /* Pas de marges safe-area — l'app gère elle-même son padding */
+    body {
+        font-family: 'Segoe UI', sans-serif;
+        background: var(--mediaco-black); /* Noir pour que les safe-areas soient de la même couleur que la nav */
+        color: var(--mediaco-black);
+        /* Padding bottom pour la safe-area iPhone (barre home) */
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
-    #splash-screen {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: #fbbc04;
-        display: flex; flex-direction: column;
-        justify-content: center; align-items: center;
-        z-index: 9999;
-        /* Couvre aussi les safe-areas */
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    .nav-tabs { display: flex; background: var(--mediaco-black); position: sticky; top: 0; z-index: 1000; border-bottom: 2px solid var(--mediaco-yellow); padding-top: calc(env(safe-area-inset-top, 0px) + 15px); min-height: 70px; align-items: center; }
+    .tab { flex: 1; color: white; padding: 15px 5px; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; border-right: 1px solid #333; }
+    .tab.active { background: var(--mediaco-yellow); color: var(--mediaco-black); }
+    .header { background: var(--mediaco-black); color: var(--mediaco-yellow); padding: 15px 10px; text-align: center; }
+    .header h3 { margin: 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; font-size: 20px; }
+    .container {
+        padding: 10px;
+        padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+        background: var(--mediaco-gray);
+        min-height: calc(100vh - 90px);
     }
-    .loader { border: 6px solid #fff; border-top: 6px solid #000; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    .card { background: #fff; padding: 18px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 6px solid var(--mediaco-yellow); position: relative; }
+    h4 { margin: 0 0 15px 0; color: var(--mediaco-black); text-transform: uppercase; font-size: 13px; border-bottom: 2px solid var(--mediaco-yellow); display: inline-block; }
+    .btn-remove { position: absolute; top: 10px; right: 10px; background: var(--danger-red); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; }
+    input, select, textarea { width: 100%; padding: 8px 10px; margin: 4px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 13px; background: #fafafa; height: 40px; }
+    input[readonly] { background-color: #eeeeee !important; border: 1px solid #ccc !important; color: #333 !important; font-weight: bold; pointer-events: none; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    label { font-size: 10px; margin-bottom: 2px; display: block; }
+    .btn-opt { background: #fff; border: 2px solid var(--mediaco-black); color: var(--mediaco-black); padding: 12px; border-radius: 10px; margin-bottom: 8px; width: 100%; font-weight: bold; text-transform: uppercase; font-size: 11px; cursor: pointer; }
+    .btn-submit { background: var(--mediaco-yellow); color: var(--mediaco-black); padding: 22px; width: 100%; border: none; font-weight: 900; font-size: 18px; border-radius: 15px; margin-top: 20px; text-transform: uppercase; }
+    .hidden { display: none; }
+    .repas-group { display: flex; justify-content: space-around; background: #f9f9f9; padding: 6px; border-radius: 10px; margin: 4px 0; border: 1px solid #eee; flex-wrap: wrap; gap: 5px; }
+    .repas-group input[type="checkbox"] { width: 16px; height: 16px; margin: 0; }
+    .horaire-block { border: 1px solid #eee; padding: 10px; border-radius: 10px; margin-bottom: 15px; background: #fcfcfc; position: relative; }
+    .section-title { padding: 8px; font-size: 11px; margin-top: 10px; border-radius: 4px; text-align: center; font-weight: bold; text-transform: uppercase; }
+    .section-trajet { background: #2196f3 !important; color: white !important; }
+    .section-travail { background: #4caf50 !important; color: white !important; }
+    .section-pause { background: #ff9800 !important; color: white !important; }
+    .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-content { background-color: var(--mediaco-gray); margin: 35% auto 60px auto; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; text-align: center; }
+    #sig-canvas { border: 2px dashed #333; background: #fff; width: 100%; height: 300px; border-radius: 10px; touch-action: none; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
+    #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 10005; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+    @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+    @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    .spinner { border: 8px solid #f3f3f3; border-top: 8px solid var(--mediaco-yellow); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text { font-family: Arial, sans-serif; font-weight: bold; color: #000; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; }
-    #pwa-install-banner { display: none; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 99999; width: calc(100% - 2rem); max-width: 420px; font-family: Arial, sans-serif; }
-    #pwa-install-banner .banner-inner { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 1px solid rgba(251,188,4,0.5); border-radius: 18px; padding: 1rem 1.2rem; box-shadow: 0 8px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 1rem; }
-    .banner-logo { font-size: 2.2rem; flex-shrink: 0; }
-    .banner-text { flex: 1; min-width: 0; }
-    .banner-title { font-size: 0.95rem; color: #fbbc04; font-weight: 700; letter-spacing: 1px; }
-    .banner-sub { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
-    .banner-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
-    #pwa-install-btn { background: #fbbc04; color: #000; border: none; border-radius: 20px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-    #pwa-dismiss-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 0.7rem; cursor: pointer; text-align: center; }
-    #pwa-ios-hint { display: none; background: rgba(26,26,26,0.97); border: 1px solid rgba(251,188,4,0.25); border-radius: 12px; padding: 0.9rem 1.1rem; margin-top: 0.6rem; font-size: 0.8rem; color: rgba(255,255,255,0.75); line-height: 1.8; text-align: center; }
-    #pwa-ios-hint strong { color: #fbbc04; }
-    .pwa-hint-btn { display: inline-block; margin-top: 0.5rem; background: rgba(251,188,4,0.15); border: 1px solid rgba(251,188,4,0.35); border-radius: 20px; padding: 0.3rem 1rem; font-size: 0.72rem; color: #fbbc04; cursor: pointer; }
-    .pwa-hint-never { display: block; margin-top: 6px; font-size: 0.65rem; color: rgba(255,255,255,0.25); cursor: pointer; }
-    #notif-banner { display: none; position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 99998; width: calc(100% - 2rem); max-width: 420px; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 1px solid rgba(251,188,4,0.4); border-radius: 14px; padding: 0.9rem 1.1rem; font-family: Arial, sans-serif; box-shadow: 0 6px 30px rgba(0,0,0,0.5); text-align: center; }
-    #notif-banner p { margin: 0 0 0.6rem; color: white; font-size: 0.85rem; }
-    #notif-banner strong { color: #fbbc04; }
-    #notif-accept-btn { background: #fbbc04; color: #000; border: none; border-radius: 20px; padding: 0.45rem 1.2rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-right: 8px; }
-    #notif-later-btn { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.72rem; cursor: pointer; }
-</style>
+  </style>
 </head>
 <body>
+  <div id="toast">Message ici</div>
+  <div class="nav-tabs" id="navTabs">
+    <div class="tab active" id="tab-saisie" onclick="ouvrirPage('saisie')">📝 Rapport</div>
+    <div class="tab" id="tab-horaires" onclick="ouvrirPage('horaires')">🕒 Mes Heures</div>
+  </div>
 
-<div id="splash-screen">
-    <div class="loader"></div>
-    <div class="loading-text">CREATEUR DE POINTAGE</div>
-</div>
-
-<iframe id="app-frame"
-    src="https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec"
-    onload="hideLoader()">
-</iframe>
-
-<!-- PWA Install Banner -->
-<div id="pwa-install-banner">
-    <div class="banner-inner">
-        <div class="banner-logo">🏗️</div>
-        <div class="banner-text">
-            <div class="banner-title">MEDIACO Pointage</div>
-            <div class="banner-sub">Installe l'app sur ton téléphone !</div>
-        </div>
-        <div class="banner-actions">
-            <button id="pwa-install-btn">📲 Installer</button>
-            <button id="pwa-dismiss-btn">Ne plus me demander</button>
-        </div>
+  <div class="header" style="position: relative; display: flex; align-items: center; justify-content: center;">
+    <h3 style="flex-grow: 1;">MEDIACO</h3>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button onclick="ouvrirMesArchives()" title="Voir mes archives PDF" style="background: none; border: none; font-size: 22px; cursor: pointer; color: white; padding: 0;">📁</button>
+      <button onclick="demanderBilanIntermediaire()" title="Bilan" style="background: none; border: none; font-size: 22px; cursor: pointer; color: white; padding: 0;">📊</button>
+      <button onclick="ouvrirProfil()" title="Profil" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--mediaco-yellow); position: relative; padding: 0;">👤<span style="font-size: 15px; position: absolute; top: -5px; right: -8px;">+</span></button>
     </div>
-    <div id="pwa-ios-hint">
-        Sur <strong>iPhone</strong> : appuie sur <strong>Partager</strong> ⬆️<br>
-        puis <strong>"Sur l'écran d'accueil"</strong> ➕
-        <br>
-        <span class="pwa-hint-btn" onclick="dismissPWA()">J'ai compris ✓</span>
-        <span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>
+  </div>
+
+  <div class="container">
+    <div id="page-saisie">
+      <div class="card">
+        <h4>Identité & Date</h4>
+        <div class="grid-2">
+          <input type="text" id="nom" placeholder="NOM">
+          <input type="text" id="prenom" placeholder="Prénom">
+        </div>
+        <input type="date" id="dateInput">
+      </div>
+
+      <div style="margin: 15px 0;">
+        <button type="button" class="btn-opt" style="width: 100%; background: #333; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="copierVeille()">📋 COPIER POINTAGE PRÉCÉDENT 📋</button>
+        <button type="button" onclick="recupererPointageCollegue()" style="width: 100%; background-color: #0056b3; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+          <span>🔄</span> RÉCUPÉRER LE POINTAGE D'UN COLLÈGUE <span>🔄</span>
+        </button>
+        <div id="modalPinCollegue" style="display:none; position:fixed; z-index:11000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; backdrop-filter: blur(3px);">
+          <div style="background:white; padding:25px; border-radius:20px; max-width:300px; width:85%; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-family: Arial, sans-serif;">
+            <h3 style="margin-top:0; color:#0056b3;">Code du collègue</h3>
+            <p style="font-size:14px; color:#666; margin-bottom:15px;">Saisis le PIN pour importer :</p>
+            <input type="tel" id="inputPinPop" inputmode="numeric" maxlength="4" placeholder="0000" style="width:100%; padding:15px; border:2px solid #0056b3; border-radius:12px; font-size:28px; text-align:center; margin-bottom:20px; outline:none; letter-spacing: 5px; box-sizing: border-box;">
+            <div style="display:flex; gap:10px;">
+              <button type="button" onclick="fermerPopPin(false)" style="flex:1; background:#eee; border:none; padding:12px; border-radius:10px; font-weight:bold; color:#666; cursor:pointer;">Annuler</button>
+              <button type="button" onclick="fermerPopPin(true)" style="flex:1; background:#0056b3; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer;">Valider</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="clientsContainer">
+        <div class="card client-block">
+          <button type="button" onclick="supprimerBloc(this, 'client')" style="float:right; color:#ff4444; border:none; background:none; font-weight:bold; font-size:18px; cursor:pointer;">✖</button>
+          <h4>Intervention</h4>
+          <input type="text" class="client" placeholder="CLIENT / CHANTIER" maxlength="33">
+          <input type="text" class="ba" placeholder="N° BA" inputmode="numeric">
+          <select class="engin" onchange="checkCustomEngin(this)">
+            <option value="">--ENGIN--</option>
+            <option value="LTM 10.40">LTM 10.40</option><option value="SANY 60">SANY 60</option>
+            <option value="LTM 10.60">LTM 10.60</option><option value="ATF 40">ATF 40</option>
+            <option value="LTM 10.70">LTM 10.70</option><option value="AC-35">AC-35</option>
+            <option value="AC-100">AC-100</option><option value="LTM 10.90">LTM 10.90</option>
+            <option value="MK-88">MK-88</option><option value="SPIERINGS">SPIERINGS</option>
+            <option value="LTC 10.55">LTC 10.55</option><option value="GROOVE 130">GROOVE 130</option>
+            <option value="Nacelle 57m">Nacelle 57m</option><option value="Nacelle 51m">Nacelle 51m</option>
+            <option value="Bras de grue">Bras de grue</option><option value="MAN Tracteur">MAN Tracteur</option>
+            <option value="AUTRE">+ PERSONNALISER</option>
+          </select>
+          <input type="text" class="engin-custom hidden" placeholder="Saisir le nom de l'engin" maxlength="14" onblur="sauvegarderEnginPerso(this)" onchange="sauvegarderEnginPerso(this)">
+          <div class="grid-2">
+            <div><label>Trajet (Automatique)</label><input type="number" class="trajet" step="0.25" placeholder="0.00" readonly></div>
+            <div><label>Activité (Automatique)</label><input type="number" class="activite" step="0.25" placeholder="0.00" readonly></div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-opt" style="border-color:var(--success-green); color:var(--success-green);" onclick="ajouterInterventionComplete()">+ AJOUTER UNE INTERVENTION (PARTOUT)</button>
+
+      <div class="card">
+        <h4>Frais & Véhicule</h4>
+        <div class="grid-2">
+          <select id="dep"><option value="">--DEP--</option><option value="Petit Déplacement">Petit Déplacement</option><option value="Grand Déplacement">Grand Déplacement</option></select>
+          <input type="number" id="pauseInput" step="0.25" placeholder="Pause (h) (Automatique)" readonly>
+        </div>
+        <div class="repas-group">
+          <label><input type="checkbox" id="dej"> Déj</label>
+          <label><input type="checkbox" id="midi"> Midi</label>
+          <label><input type="checkbox" id="soir"> Soir</label>
+          <label><input type="checkbox" id="nuit"> Nuit</label>
+          <label><input type="checkbox" id="ferie"> Férié</label>
+        </div>
+        <label style="font-weight:bold;">Utilisation Véhicule</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 15px;">
+          <select id="vehicule" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;"><option value="">-- TYPE --</option><option value="Societe">Société</option><option value="Perso">Perso</option></select>
+          <input type="number" id="temps" placeholder="Temps en h" step="0.5" min="0" max="24" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;" onblur="validerTempsVehicule(this)">
+          <input type="number" id="km" placeholder="KM" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+        </div>
+        <textarea id="commentaire" placeholder="Commentaires..."></textarea>
+      </div>
+
+      <button type="button" onclick="ouvrirRecap()" style="width:100%; padding:15px; background:#1a1a1a; color:#FFD700; border:2px solid #FFD700; font-weight:900; font-size:16px; border-radius:15px; margin-top:15px; cursor:pointer; text-transform:uppercase; letter-spacing:1px;">🔍 VOIR LE RÉCAPITULATIF</button>
+      <button type="button" class="btn-submit" onclick="ouvrirSignature()">Valider et Signer</button>
+      <p style="text-align: center; font-size: 12px; color: #666; margin-top: 12px; font-style: italic;">* Les heures d'activités, trajets, urgentes et attentes sont générées automatiquement via la ligne de vie.</p>
+      <p style="text-align: center; font-size: 10px; color: #666; margin-top: 10px; font-style: italic;">**Pointage atelier en cours de développement**</p>
+      <p style="text-align: center; font-size: 10px; color: #666; margin-top: 10px; font-style: italic;">Version 1.1 (Béta)</p>
+      <div style="text-align: center; margin-top: 20px; padding: 15px;">
+        <a href="https://www.youtube.com/watch?v=fMbIBfIHozs" target="_blank" style="font-size: 16px; font-weight: bold; color: #007bff; text-decoration: underline;">🎥 Besoin d'aide ? Clique ici pour voir le tuto vidéo</a>
+        <p style="text-align: center; font-size: 12px; color: #666; margin-top: 12px; font-style: italic;">Des bisous et bonne journée, Quentin 06.49.82.79.65. 😘</p>
+        <div style="text-align:center; margin-top:8px;">
+          <button onclick="ouvrirSignalerBug()" style="background:none; border:1px solid #dc3545; color:#dc3545; padding:8px 16px; border-radius:20px; font-size:12px; cursor:pointer;">🐛 Signaler un bug</button>
+        </div>
+      </div>
+      <p style="text-align: center; font-size: 12px; color: #666; margin-top: 12px; font-style: italic;">© 2026 BERNARD Q. Créée le 1er avril 2026. Tous droits réservés.
+        <a href="#" onclick="openLegalModal()" style="color: #007bff; text-decoration: underline; cursor: pointer;">Mentions Légales, CGU & RGPD</a>
+      </p>
     </div>
+
+    <div id="page-horaires" class="hidden">
+      <div class="card">
+        <h4>🕒 Ligne de vie</h4>
+        <div id="horairesContainer">
+          <div class="horaire-block">
+            <button type="button" onclick="supprimerBloc(this, 'horaire')" style="float:right; color:#ff4444; border:none; background:none; font-weight:bold; font-size:18px; cursor:pointer;">✖</button>
+            <div class="section-title section-trajet">📍 ALLER</div>
+            <div class="grid-2">
+              <div><label>Départ</label><input type="time" class="hDep1" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+              <div><label>Arrivée</label><input type="time" class="hArr1" oninput="synchroniserHeures(this, 'aller')" onblur="arrondir30min(this)"></div>
+            </div>
+            <div class="section-title section-travail">🏗️ ACTIVITÉ</div>
+            <div class="grid-2">
+              <div><label>Début</label><input type="time" class="hAct1" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+              <div><label>Fin</label><input type="time" class="hAct2" oninput="synchroniserHeures(this, 'act')" onblur="arrondir30min(this)"></div>
+            </div>
+            <div class="section-title section-trajet">📍 RETOUR</div>
+            <div class="grid-2">
+              <div><label>Départ</label><input type="time" class="hDep2" oninput="synchroniserHeures(this, 'trajet')" onblur="arrondir30min(this)"></div>
+              <div><label>Retour</label><input type="time" class="hArr2" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-opt" style="border-color:var(--success-green); color:var(--success-green);" onclick="ajouterInterventionComplete()">+ AJOUTER UNE INTERVENTION (PARTOUT)</button>
+        <div class="section-title section-pause">☕ PAUSE 1</div>
+        <div class="grid-2">
+          <div><label>Début</label><input type="time" id="hPau1" oninput="calculerAuto(); verifierPanier()" onblur="arrondir30min(this)"></div>
+          <div><label>Fin</label><input type="time" id="hPau2" oninput="calculerAuto(); verifierPanier()" onblur="arrondir30min(this)"></div>
+        </div>
+        <div id="pause2-section" style="display:none;">
+          <div class="section-title section-pause" style="background:#e65100 !important;">☕ PAUSE 2</div>
+          <div class="grid-2">
+            <div><label>Début</label><input type="time" id="hPau3" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+            <div><label>Fin</label><input type="time" id="hPau4" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+          </div>
+        </div>
+        <button type="button" id="btn-pause2" onclick="togglePause2()" style="width:100%; margin-top:8px; background:transparent; border:1px dashed #ff9800; color:#e65100; padding:8px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold;">+ AJOUTER UNE 2ÈME PAUSE</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="signatureModal" class="modal">
+    <div class="modal-content">
+      <h4 style="border:none;">Signer le pointage</h4>
+      <canvas id="sig-canvas"></canvas>
+      <div class="modal-btns">
+        <button class="btn-opt" style="background:#ccc;" onclick="fermerSignature()">Annuler</button>
+        <button class="btn-opt" style="background:var(--mediaco-yellow);" onclick="effacerSig()">Effacer</button>
+      </div>
+      <button class="btn-submit" id="btn-final-envoi" onclick="envoyer()">Valider et envoyer dans DRIVE</button>
+    </div>
+  </div>
+
+  <div id="loaderOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10005; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+    <div class="spinner"></div>
+    <p style="margin-top: 20px; font-weight: bold; font-size: 16px;">Chargement en cours ...</p>
+  </div>
+
+  <div id="legalModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999;">
+    <div style="background:white; margin:10% auto; padding:20px; width:80%; max-height:70%; overflow-y:auto; border-radius:8px;">
+      <button onclick="closeLegalModal()" style="float:right; cursor:pointer;">Fermer</button>
+      <h2>Mentions Légales</h2><p>Éditeur : BERNARD Quentin. Contact : quentin.88270@gmail.com. Hébergeur : Google (Google Apps Script) & Github.</p>
+      <h2>CGU</h2><p>L'accès à cette web-application est réservé à un usage strictement professionnel.</p>
+      <h2>RGPD</h2><p>Nous collectons des données strictement nécessaires au fonctionnement de l'outil. Vos données ne sont jamais partagées à des tiers.</p>
+    </div>
+  </div>
+
+  <div id="modalArchives" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:#f4f4f4; width:90%; max-width:500px; max-height:80vh; border-radius:15px; overflow:hidden; display:flex; flex-direction:column; position:relative;">
+      <div style="background:#fbbc04; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000;">
+        <h2 style="margin:0; font-size:18px; color:#000;">📂 Mes Pointages PDF</h2>
+        <button onclick="document.getElementById('modalArchives').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; font-weight:bold;">×</button>
+      </div>
+      <div id="zoneArchives" style="padding:15px; overflow-y:auto; flex-grow:1; background:#eee;"><p style="text-align:center; color:#666;">Recherche des fichiers...</p></div>
+      <div style="padding:10px; background:#fff; text-align:center; font-size:11px; color:#888;">Envoyé directement au CLOUD du service paie. Inchangeable pour eux.</div>
+    </div>
+  </div>
+
+  <!-- MODALES AUTH -->
+  <div id="bienvenueModal" class="modal" style="display: block; z-index: 10001;">
+    <div class="modal-content" style="text-align: center;">
+      <h3 style="border-bottom: 2px solid var(--mediaco-yellow); padding-bottom: 10px; color:black;">POINTAGE DÉMATÉRIALISÉ</h3>
+      <p style="margin: 20px 0; color: #333; font-weight: bold;">Identifiez-vous pour accéder au pointage</p>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button type="button" class="btn-submit" onclick="ouvrirLogin()" style="background: var(--mediaco-yellow); color:black; font-weight:bold; padding: 15px; border:none; border-radius:5px; cursor:pointer;">DÉJÀ UN COMPTE (CODE PIN)</button>
+        <button type="button" class="btn-opt" onclick="ouvrirEnregistrement()" style="background: #f0f0f0; border: 1px solid #ccc; padding: 12px; border-radius:5px; cursor:pointer;">CRÉER UN COMPTE</button>
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="#" onclick="ouvrirGuide()" style="color: #555; font-size: 13px; text-decoration: underline;">📖 Guide d'utilisation & Dernière mise à jour</a>
+      </div>
+      <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
+        <p style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 10px;">🎥 Vidéo : Tuto rapide de l'appli !</p>
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; border: 2px solid var(--mediaco-yellow); background: #000;">
+          <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/fMbIBfIHozs" title="Tuto Mediaco" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalGuide" class="modal" style="display:none; z-index: 10000;">
+    <div class="modal-content" style="max-width: 90%; max-height: 80vh; overflow-y: auto; border-top: 5px solid var(--mediaco-yellow);">
+      <span onclick="fermerGuide()" style="float:right; cursor:pointer; font-size: 24px;">×</span>
+      <h2 style="margin-top:0;">📚 Guide & Nouveautés</h2><hr>
+      <div id="contenuGuide">
+        <p><strong>Dernière mise à jour :</strong> 15 Avril 2026</p>
+        <ul style="font-size: 14px; color: #333;">
+          <li>✅ Ajout de véhicules</li><li>✅ Ajout des heures et KM VH. Perso</li>
+          <li>✅ Ajout de la fonction maxlength pour un quota de caractères par case.</li>
+          <li>✅ Ajout de "✉️" pour voir et supprimer des pointages.</li>
+        </ul>
+        <h3>Comment ça marche ?</h3>
+        <img src="https://lh3.googleusercontent.com/d/1dwanvEzohoG0AP3GbanbYFHiN0U5cAX6" style="width:100%; border-radius: 8px; margin-bottom: 10px;">
+        <img src="https://lh3.googleusercontent.com/d/1lamq1MWsi5CVlUtqWvShr8y5SVJT1EV6" style="width:100%; border-radius: 8px; margin-top: 10px;">
+      </div>
+      <button type="button" onclick="fermerGuide()" class="btn-opt" style="width:100%; margin-top: 20px;">J'AI COMPRIS</button>
+    </div>
+  </div>
+
+  <div id="loginModal" class="modal" style="display: none; z-index: 10002; overflow-y: auto;">
+    <div class="modal-content" style="text-align: center; margin: 40% auto 60px auto;">
+      <h4 style="color:black;">Entrez votre PIN</h4>
+      <input type="number" id="loginPin" placeholder="4 chiffres" pattern="\d{4}" inputmode="numeric"
+             style="font-size: 24px; text-align: center; width: 80%; padding: 10px; margin: 20px 0; border: 2px solid var(--mediaco-yellow);"
+             onkeyup="if(this.value.length===4) connexionViaPin()">
+      <div class="modal-btns" style="display: flex; gap: 10px;">
+        <button type="button" class="btn-opt" style="flex:1;" onclick="retourBienvenue()">Retour</button>
+        <button type="button" class="btn-submit" style="flex:2;" onclick="connexionViaPin()">VALIDER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE BILAN -->
+  <div id="modalBilan" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10004; align-items:center; justify-content:center;">
+    <div style="background:white; padding:25px; border-radius:15px; width:85%; max-width:340px; font-family:sans-serif;">
+      <h3 style="margin:0 0 15px; color:#1a1a1a; border-bottom:2px solid #FFD700; padding-bottom:8px;">📊 Choisir la période</h3>
+      <button onclick="envoyerBilanPeriode('courante')" style="width:100%; padding:13px; margin-bottom:10px; background:#FFD700; color:black; border:none; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer;">📅 Période en cours</button>
+      <div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:10px;">
+        <label style="font-size:12px; font-weight:bold; color:#666; display:block; margin-bottom:6px;">DATE DÉBUT</label>
+        <input type="date" id="bilanDateDebut" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; margin-bottom:8px; height:38px;">
+        <label style="font-size:12px; font-weight:bold; color:#666; display:block; margin-bottom:6px;">DATE FIN</label>
+        <input type="date" id="bilanDateFin" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; margin-bottom:10px; height:38px;">
+        <button onclick="envoyerBilanPeriode('manuel')" style="width:100%; padding:12px; background:#1a1a1a; color:white; border:none; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer;">📆 Envoyer cette période</button>
+      </div>
+      <button onclick="document.getElementById('modalBilan').style.display='none'" style="width:100%; padding:10px; background:#eee; color:#666; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Annuler</button>
+    </div>
+  </div>
+
+  <!-- MODALE RÉCAPITULATIF -->
+  <div id="modalRecap" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10006; overflow-y:auto;">
+    <div style="background:#fff; margin:20px auto; padding:0; border-radius:15px; width:92%; max-width:500px; overflow:hidden; font-family:'Segoe UI',sans-serif;">
+      <div style="background:#1a1a1a; padding:15px 20px; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#FFD700; font-size:16px; text-transform:uppercase; letter-spacing:1px;">🔍 Récapitulatif du pointage</h3>
+        <button onclick="document.getElementById('modalRecap').style.display='none'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1;">×</button>
+      </div>
+      <div id="recap-content" style="padding:15px; background:#f9f9f9;"></div>
+      <div style="padding:15px; background:#fff; display:flex; gap:10px;">
+        <button onclick="document.getElementById('modalRecap').style.display='none'" style="flex:1; padding:12px; background:#eee; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px;">✏️ Modifier</button>
+        <button onclick="document.getElementById('modalRecap').style.display='none'; ouvrirSignature();" style="flex:2; padding:12px; background:#FFD700; border:none; border-radius:8px; font-weight:900; cursor:pointer; font-size:14px; text-transform:uppercase;">✅ Signer et Envoyer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE PROFIL — BUG #3 FIX : select dépôt ajouté -->
+  <div id="profilModal" class="modal" style="display: none; z-index: 10003;">
+    <div class="modal-content" style="text-align: left;">
+      <h4 style="border-bottom: 2px solid var(--mediaco-yellow); margin-bottom: 20px; color:black;">Création de compte</h4>
+      <label>CODE PIN (4 chiffres)</label>
+      <input type="number" id="configPin" placeholder="Ex: 1234" pattern="\d{4}" inputmode="numeric" style="font-weight: bold; border: 2px solid var(--mediaco-yellow);">
+      <label>Votre Nom</label>
+      <input type="text" id="configNom" placeholder="NOM">
+      <label>Votre Prénom</label>
+      <input type="text" id="configPrenom" placeholder="Prénom">
+      <label>Email</label>
+      <input type="email" id="configEmail" placeholder="nom@gmail.com">
+      <!-- BUG #3 FIX : Sélection du dépôt -->
+      <label>Dépôt</label>
+      <select id="configDepot" style="width:100%; padding:8px 10px; margin:4px 0; border:1px solid #ddd; border-radius:8px; font-size:13px; height:40px; background:#fafafa;">
+        <option value="">-- Choisir votre dépôt --</option>
+        <option value="St Nicolas">St Nicolas (54210)</option>
+        <option value="Flévy">Flévy (57365)</option>
+        <option value="Illange">Illange (57970)</option>
+        <option value="St Avold">St Avold (57500)</option>
+        <option value="Cernay">Cernay (68700)</option>
+      </select>
+      <label>Espace Cloud Personnel</label>
+      <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+        <input type="text" id="configDrive" placeholder="Cliquer sur Générer..." readonly style="background: #f0f0f0; flex: 1; border: 1px solid #ccc; padding: 8px; border-radius: 4px;">
+        <button type="button" id="btn-cloud" onclick="genererEspaceCloud()" style="background: var(--mediaco-yellow); border: none; padding: 5px 12px; cursor: pointer; font-weight: bold; border-radius: 4px; font-size: 11px; color: black; white-space: nowrap;">GÉNÉRER</button>
+      </div>
+      <div class="modal-btns" style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn-opt" style="background: #e0e0e0; color: #333; border: none; padding: 12px; border-radius: 6px; cursor: pointer; flex: 1; font-weight: bold;" onclick="retourBienvenue()">Annuler</button>
+        <button type="button" class="btn-submit" style="background: var(--mediaco-yellow); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; flex: 2; font-weight: bold;" onclick="sauvegarderProfil()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    var grilleTrajet = new Array(48).fill(0);
+    var grilleActivite = new Array(48).fill(0);
+    var grillePause = new Array(48).fill(0);
+
+    // ── BUG PIN 0xxx : forcer le PIN en string padded
+    function normaliserPin(pin) {
+      return String(pin).padStart(4, '0');
+    }
+
+    window.onload = function() {
+      const bienvenueModal = document.getElementById('bienvenueModal');
+      const profilModal = document.getElementById('profilModal');
+      const user = JSON.parse(localStorage.getItem('mediaco_user') || '{}');
+      if (user.nom && user.pin) {
+        if (bienvenueModal) bienvenueModal.style.display = 'none';
+        if (profilModal) profilModal.style.display = 'none';
+        if (document.getElementById('nom')) document.getElementById('nom').value = user.nom;
+        if (document.getElementById('prenom')) document.getElementById('prenom').value = user.prenom || '';
+      } else {
+        if (bienvenueModal) bienvenueModal.style.display = 'block';
+        if (profilModal) profilModal.style.display = 'none';
+      }
+      const draft = localStorage.getItem('mediaco_brouillon');
+      if (draft) {
+        const d = JSON.parse(draft);
+        if (document.getElementById('nom') && !document.getElementById('nom').value) document.getElementById('nom').value = d.nom || '';
+        if (document.getElementById('prenom') && !document.getElementById('prenom').value) document.getElementById('prenom').value = d.prenom || '';
+        if (document.getElementById('dateInput')) document.getElementById('dateInput').value = d.date || '';
+        if (document.getElementById('hPau1')) document.getElementById('hPau1').value = d.hPau1 || '';
+        if (document.getElementById('hPau2')) document.getElementById('hPau2').value = d.hPau2 || '';
+        if (document.getElementById('dep')) document.getElementById('dep').value = d.dep || '';
+        if (document.getElementById('dej')) document.getElementById('dej').checked = d.dej || false;
+        if (document.getElementById('midi')) document.getElementById('midi').checked = d.midi || false;
+        if (document.getElementById('soir')) document.getElementById('soir').checked = d.soir || false;
+        if (document.getElementById('nuit')) document.getElementById('nuit').checked = d.nuit || false;
+        if (document.getElementById('ferie')) document.getElementById('ferie').checked = d.ferie || false;
+        if (document.getElementById('vehicule')) document.getElementById('vehicule').value = d.vehicule || '';
+        if (document.getElementById('km')) document.getElementById('km').value = d.km || '';
+        if (document.getElementById('commentaire')) document.getElementById('commentaire').value = d.commentaire || '';
+      } else {
+        const a = new Date();
+        if (document.getElementById('dateInput')) document.getElementById('dateInput').value = a.getFullYear() + '-' + String(a.getMonth()+1).padStart(2,'0') + '-' + String(a.getDate()).padStart(2,'0');
+      }
+      const localPin = localStorage.getItem('mediaco_pin');
+      if (localPin && localPin !== "") {
+        google.script.run
+          .withSuccessHandler(function(serverUser) {
+            if (serverUser && serverUser.nom) {
+              document.getElementById('nom').value = serverUser.nom;
+              document.getElementById('prenom').value = serverUser.prenom;
+              localStorage.setItem('mediaco_user', JSON.stringify(serverUser));
+              if (bienvenueModal) bienvenueModal.style.display = "none";
+            } else {
+              if (bienvenueModal) bienvenueModal.style.display = "block";
+            }
+          })
+          .withFailureHandler(function() { if (bienvenueModal) bienvenueModal.style.display = "block"; })
+          .chargerProfilParPIN(localPin);
+      } else {
+        if (bienvenueModal && !user.nom) bienvenueModal.style.display = "block";
+      }
+      document.addEventListener('input', autoSaveLocal);
+
+      // Charger les engins personnalisés sauvegardés
+      chargerEnginsPerso();
+
+      // ── FCM : lire token injecté par doGet via template Apps Script
+      (function() {
+        try {
+          var tokenTemplate = '<?= fcmTokenFromUrl ?>';
+          if (tokenTemplate && tokenTemplate.length > 50 && tokenTemplate !== '<?= fcmTokenFromUrl ?>') {
+            console.log('[FCM] Token recu via template : ' + tokenTemplate.substring(0,20) + '...');
+            localStorage.setItem('pending_fcm_token', tokenTemplate);
+            const pin = localStorage.getItem('mediaco_pin');
+            if (pin) {
+              google.script.run
+                .withSuccessHandler(function(res) {
+                  console.log('[FCM] template save -> ' + res);
+                  if (res === 'OK') {
+                    localStorage.removeItem('pending_fcm_token');
+                    if(typeof showToast === 'function') showToast('🔔 Notifications activees !');
+                  }
+                })
+                .withFailureHandler(function(e) { console.log('[FCM] Erreur: ' + e); })
+                .sauvegarderFCMToken(pin, tokenTemplate);
+            }
+          }
+        } catch(e) { console.log('[FCM] Erreur template: ' + e); }
+      })();
+
+      // Envoyer le PIN au parent (GitHub Pages) pour qu'il puisse faire le fetch
+      (function envoyerPINauParent() {
+        const pin = localStorage.getItem('mediaco_pin');
+        if (pin && window.parent !== window) {
+          window.parent.postMessage({ type: 'MEDIACO_PIN', pin: pin }, '*');
+          console.log('[FCM] PIN envoye au parent: ' + pin);
+        }
+        // Reessayer toutes les 3s jusqu'a ce que le PIN soit dispo
+        if (!pin) {
+          setTimeout(envoyerPINauParent, 3000);
+        }
+      })();
+
+      // Intervalle : envoyer token pending via google.script.run
+      var _fcmInterval = setInterval(function() {
+        const pending = localStorage.getItem('pending_fcm_token');
+        const pin     = localStorage.getItem('mediaco_pin');
+        if (pending && pin) {
+          clearInterval(_fcmInterval);
+          console.log('[FCM] Interval -> envoi pour PIN ' + pin);
+          google.script.run
+            .withSuccessHandler(function(res) {
+              console.log('[FCM] Interval -> ' + res);
+              if (res === 'OK') {
+                localStorage.removeItem('pending_fcm_token');
+                if(typeof showToast === 'function') showToast('🔔 Notifications activees !');
+              }
+            })
+            .withFailureHandler(function(e) { console.log('[FCM] Interval erreur: ' + e); })
+            .sauvegarderFCMToken(pin, pending);
+        }
+      }, 5000);
+
+      // Recevoir token FCM via postMessage (fallback)
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'FCM_TOKEN') {
+          const fcmToken = event.data.token;
+          if (!fcmToken) return;
+          const lp = localStorage.getItem('mediaco_pin');
+          if (lp) {
+            google.script.run.sauvegarderFCMToken(lp, fcmToken);
+            console.log('[FCM] Token envoyé via postMessage pour PIN ' + lp);
+          } else {
+            localStorage.setItem('pending_fcm_token', fcmToken);
+          }
+        }
+      });
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const storedUser = localStorage.getItem('mediaco_user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        if (document.getElementById('nom')) document.getElementById('nom').value = user.nom || "";
+        if (document.getElementById('prenom')) document.getElementById('prenom').value = user.prenom || "";
+        if (document.getElementById('profilModal')) document.getElementById('profilModal').style.display = 'none';
+        if (document.getElementById('bienvenueModal')) document.getElementById('bienvenueModal').style.display = 'none';
+      } else {
+        if (document.getElementById('bienvenueModal')) document.getElementById('bienvenueModal').style.display = 'block';
+      }
+    });
+
+    function openLegalModal() { document.getElementById('legalModal').style.display = "block"; }
+    function closeLegalModal() { document.getElementById('legalModal').style.display = "none"; }
+    function ouvrirGuide() { document.getElementById('modalGuide').style.display = 'block'; }
+    function fermerGuide() { document.getElementById('modalGuide').style.display = 'none'; }
+
+    function showToast(message) {
+      var x = document.getElementById("toast");
+      x.innerHTML = message;
+      x.className = "show";
+      setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+    function ouvrirMesArchives() {
+      const userData = JSON.parse(localStorage.getItem('mediaco_user'));
+      if (!userData || !userData.drive) return showToast("⚠️ Configure ton profil d'abord.");
+      document.getElementById('modalArchives').style.display = 'flex';
+      document.getElementById('zoneArchives').innerHTML = '<div style="text-align:center; padding:20px;">Lecture du Drive...</div>';
+      google.script.run.withSuccessHandler(function(dossiers) {
+        let zone = document.getElementById('zoneArchives');
+        if (!dossiers || dossiers.length === 0) { zone.innerHTML = '<p style="text-align:center; padding:20px;">Aucun dossier trouvé.</p>'; return; }
+        let html = '<div style="margin-bottom:15px; font-weight:bold;">Sélectionnez un mois :</div>';
+        dossiers.forEach(d => { html += `<button onclick="chargerFichiersDuMois('${d.id}', '${d.nom}')" style="display:block; width:100%; padding:12px; margin-bottom:8px; background:#f4f4f4; border:1px solid #ddd; border-radius:10px; cursor:pointer; text-align:left;">📁 ${d.nom}</button>`; });
+        zone.innerHTML = html;
+      }).listerDossiersMois(userData.drive);
+    }
+
+    function chargerFichiersDuMois(dossierId, nomMois) {
+      let zone = document.getElementById('zoneArchives');
+      zone.innerHTML = '<div style="text-align:center; padding:20px;">Chargement...</div>';
+      google.script.run.withSuccessHandler(function(fichiers) {
+        let html = `<button onclick="ouvrirMesArchives()" style="margin-bottom:15px; background:#eee; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">⬅ Retour</button><h3 style="margin-top:0;">${nomMois}</h3>`;
+        if (!fichiers || fichiers.length === 0) { html += '<p>Aucun pointage dans ce dossier.</p>'; }
+        else {
+          fichiers.sort((a, b) => { let aT=(a.status==='NON_TRAITE'); let bT=(b.status==='NON_TRAITE'); return aT===bT?0:aT?-1:1; });
+          fichiers.forEach(f => {
+            let isT=(f.status==='NON_TRAITE'); let bc=isT?"#ffc107":"#28a745"; let tc=isT?"#856404":"#28a745"; let st=isT?"⚠️ À TRAITER":"✅ ARCHIVÉ";
+            let btnS=isT?`<button onclick="confirmerSuppression('${f.id}','${f.nom}',this,'${dossierId}','${nomMois}')" style="background:#dc3545;color:#fff;border:none;width:35px;height:35px;border-radius:5px;cursor:pointer;font-weight:bold;font-size:18px;">✕</button>`:"";
+            html+=`<div style="background:#fff;padding:12px;margin-bottom:10px;border-radius:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);display:flex;justify-content:space-between;align-items:center;border-left:5px solid ${bc};"><div style="flex-grow:1;padding-right:10px;"><div style="font-weight:bold;font-size:13px;color:#333;">${f.nom}</div><div style="font-size:10px;color:${tc};font-weight:bold;">${st}</div></div><div style="display:flex;gap:8px;"><button onclick="window.open('${f.url}','_blank')" style="background:#000;color:#fff;border:none;width:35px;height:35px;border-radius:5px;cursor:pointer;font-size:16px;">👁️</button>${btnS}</div></div>`;
+          });
+        }
+        zone.innerHTML = html;
+      }).listerFichiersDansDossier(dossierId);
+    }
+
+    function confirmerSuppression(fileId, fileName, btn, dossierId, nomMois) {
+      if (confirm("⚠️ Voulez-vous supprimer ce pointage ?")) {
+        btn.innerText = "..."; btn.disabled = true;
+        google.script.run.withSuccessHandler(function() { showToast("🗑️ Pointage supprimé."); chargerFichiersDuMois(dossierId, nomMois); }).supprimerFichierDrive(fileId);
+      }
+    }
+
+    function genererEspaceCloud() {
+      const nom = document.getElementById('configNom').value.trim();
+      const prenom = document.getElementById('configPrenom').value.trim();
+      const email = document.getElementById('configEmail').value.trim();
+      if (!nom || !email) { showToast("⚠️ Précise ton NOM et ton MAIL avant de créer le dossier !"); return; }
+      const btn = document.getElementById('btn-cloud');
+      btn.innerText = "⏳ Création..."; btn.disabled = true;
+      google.script.run
+        .withSuccessHandler(function(idGenere) {
+          if (!idGenere || String(idGenere).indexOf("Erreur") !== -1) { showToast("❌ " + idGenere); btn.innerText = "RÉESSAYER"; btn.disabled = false; }
+          else { document.getElementById('configDrive').value = String(idGenere).trim(); btn.innerText = "✅ DOSSIER CRÉÉ"; btn.style.backgroundColor = "#28a745"; btn.style.color = "white"; showToast("✅ Dossier créé !"); }
+        })
+        .withFailureHandler(function(err) { showToast("❌ Erreur : " + err); btn.innerText = "RÉESSAYER"; btn.disabled = false; })
+        .creerDossierPersonnel(nom, prenom, email);
+    }
+
+    function recupererPointageCollegue() {
+      const modal = document.getElementById('modalPinCollegue');
+      document.getElementById('inputPinPop').value = "";
+      modal.style.display = 'flex';
+      setTimeout(() => document.getElementById('inputPinPop').focus(), 100);
+    }
+
+    function fermerPopPin(valide) {
+      const pin = document.getElementById('inputPinPop').value;
+      document.getElementById('modalPinCollegue').style.display = 'none';
+      if (valide) {
+        if (!pin || pin.length < 4) { showToast("⚠️ PIN invalide (4 chiffres requis)"); return; }
+        lancerImportation(normaliserPin(pin));
+      }
+    }
+
+    function lancerImportation(pin) {
+      const loader = document.getElementById('loaderOverlay');
+      if (loader) loader.style.display = 'flex';
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (loader) loader.style.display = 'none';
+          if (!data) return showToast("❌ Rien trouvé pour ce PIN");
+          if (data.hPau1) document.getElementById('hPau1').value = data.hPau1;
+          if (data.hPau2) document.getElementById('hPau2').value = data.hPau2;
+          const clientsInputs = document.querySelectorAll('.client');
+          const baInputs = document.querySelectorAll('.ba');
+          if (clientsInputs[0]) clientsInputs[0].value = data.c1.nom || "";
+          if (baInputs[0]) baInputs[0].value = data.c1.ba || "";
+          if (data.c2 && data.c2.nom && clientsInputs.length < 2) { ajouterClient(); ajouterHoraire(); }
+          if (data.c3 && data.c3.nom && clientsInputs.length < 3) { ajouterClient(); ajouterHoraire(); }
+          setTimeout(() => {
+            const allClients = document.querySelectorAll('.client');
+            const allBa = document.querySelectorAll('.ba');
+            const allBlocksH = document.querySelectorAll('.horaire-block');
+            if (data.c2 && data.c2.nom && allClients[1]) { allClients[1].value = data.c2.nom; allBa[1].value = data.c2.ba; }
+            if (data.c3 && data.c3.nom && allClients[2]) { allClients[2].value = data.c3.nom; allBa[2].value = data.c3.ba; }
+            if (data.horaires && Array.isArray(data.horaires)) {
+              data.horaires.forEach((h, i) => {
+                const b = allBlocksH[i];
+                if (b) { ['hDep1','hArr1','hAct1','hAct2','hDep2','hArr2'].forEach(f => { const inp = b.querySelector('.'+f); if (inp) inp.value = h[f]||""; }); }
+              });
+            }
+            if (typeof calculerAuto === "function") calculerAuto();
+            showToast("✅ Importation réussie ! ⚠️ Ajouter engin et paniers ⚠️");
+          }, 400);
+        })
+        .withFailureHandler(function(err) { if (loader) loader.style.display = 'none'; showToast("Erreur : " + err); })
+        .getPointageParPinUniquement(pin);
+    }
+
+    function autoSaveLocal() {
+      const data = {
+        nom: document.getElementById('nom').value, prenom: document.getElementById('prenom').value,
+        date: document.getElementById('dateInput').value, hPau1: document.getElementById('hPau1').value,
+        hPau2: document.getElementById('hPau2').value, dep: document.getElementById('dep').value,
+        dej: document.getElementById('dej').checked, midi: document.getElementById('midi').checked,
+        soir: document.getElementById('soir').checked, nuit: document.getElementById('nuit').checked,
+        ferie: document.getElementById('ferie').checked, vehicule: document.getElementById('vehicule').value,
+        temps: document.getElementById('temps').value, km: document.getElementById('km').value,
+        pin: localStorage.getItem('mediaco_pin') || "", commentaire: document.getElementById('commentaire').value
+      };
+      localStorage.setItem('mediaco_brouillon', JSON.stringify(data));
+    }
+
+    function tToM(heureStr) {
+      if (!heureStr) return 0;
+      let parts = heureStr.split(":");
+      let h = parseInt(parts[0]), m = parseInt(parts[1]);
+      if (h === 23 && m > 55) return 24 * 60;
+      return (h * 60) + m;
+    }
+
+    function marquerGrille(debut, fin, grille) {
+      if (!debut || !fin) return;
+      let s = tToM(debut), e = tToM(fin);
+      if (e < s) e += 24 * 60;
+      for (let m = s; m < e; m += 30) grille[Math.floor(m/30)%48] = 1;
+    }
+
+    function renderGrilles() {
+      grilleTrajet.fill(0); grilleActivite.fill(0); grillePause.fill(0);
+      const p1=document.getElementById('hPau1').value, p2=document.getElementById('hPau2').value;
+      marquerGrille(p1, p2, grillePause);
+      const p3=document.getElementById('hPau3'), p4=document.getElementById('hPau4');
+      if (p3&&p4&&p3.value&&p4.value) marquerGrille(p3.value, p4.value, grillePause);
+      document.querySelectorAll('.horaire-block').forEach(bloc => {
+        marquerGrille(bloc.querySelector('.hDep1').value, bloc.querySelector('.hArr1').value, grilleTrajet);
+        marquerGrille(bloc.querySelector('.hDep2').value, bloc.querySelector('.hArr2').value, grilleTrajet);
+        marquerGrille(bloc.querySelector('.hAct1').value, bloc.querySelector('.hAct2').value, grilleActivite);
+      });
+      for (let j=0;j<48;j++) { if(grilleTrajet[j]===1) grilleActivite[j]=0; if(grillePause[j]===1){grilleActivite[j]=0;grilleTrajet[j]=0;} }
+      for (let i=0;i<48;i++) {
+        let cell=document.getElementById('t'+i);
+        if (cell) {
+          cell.style.backgroundColor="transparent";
+          if(grillePause[i]===1) cell.style.backgroundColor="#ea9999";
+          else if(grilleActivite[i]===1) cell.style.backgroundColor="#4caf50";
+          else if(grilleTrajet[i]===1) cell.style.backgroundColor="#4a86e8";
+        }
+      }
+    }
+
+    function calculerAuto() {
+      const blocsH=document.querySelectorAll('.horaire-block'), blocsI=document.querySelectorAll('.client-block');
+      const pS=tToM(document.getElementById('hPau1').value), pE=tToM(document.getElementById('hPau2').value);
+      const p2S=tToM(document.getElementById('hPau3')?document.getElementById('hPau3').value:'');
+      const p2E=tToM(document.getElementById('hPau4')?document.getElementById('hPau4').value:'');
+      const dp1=(pE>pS)?(pE-pS)/60:0, dp2=(p2E>p2S)?(p2E-p2S)/60:0;
+      document.getElementById('pauseInput').value=(dp1+dp2)>0?(dp1+dp2).toFixed(2):"0.00";
+      function overlap(s1,e1,s2,e2){if(s2===0&&e2===0)return 0;return Math.max(0,Math.min(e1,e2)-Math.max(s1,s2));}
+      blocsH.forEach((b,i)=>{
+        const d1=tToM(b.querySelector('.hDep1').value),a1=tToM(b.querySelector('.hArr1').value);
+        const d2=tToM(b.querySelector('.hDep2').value),a2=tToM(b.querySelector('.hArr2').value);
+        const ac1=tToM(b.querySelector('.hAct1').value),ac2=tToM(b.querySelector('.hAct2').value);
+        let tM=(a1>d1?a1-d1:0)+(a2>d2?a2-d2:0);
+        let aM=ac2>ac1?ac2-ac1:0;
+        aM-=overlap(ac1,ac2,pS,pE); aM-=overlap(ac1,ac2,p2S,p2E);
+        aM-=overlap(ac1,ac2,d1,a1); aM-=overlap(ac1,ac2,d2,a2);
+        if(aM<0)aM=0;
+        if(blocsI[i]){blocsI[i].querySelector('.trajet').value=tM>0?(tM/60).toFixed(2):"";blocsI[i].querySelector('.activite').value=aM>0?(aM/60).toFixed(2):"";}
+      });
+      renderGrilles();
+    }
+
+    function supprimerBloc(btn,type){
+      if(confirm("Supprimer cette intervention et ses horaires ?")){
+        const sel=type==='horaire'?'.horaire-block':'.client-block';
+        const bloc=btn.closest(sel);
+        const tous=document.querySelectorAll(sel);
+        const idx=Array.from(tous).indexOf(bloc);
+        const autresSel=type==='horaire'?'.client-block':'.horaire-block';
+        const autres=document.querySelectorAll(autresSel);
+        if(autres[idx])autres[idx].remove();
+        bloc.remove();
+        if(typeof calculerAuto==="function")calculerAuto();
+        showToast("Intervention et horaires supprimés");
+      }
+    }
+
+    function copierVeille(){
+      const nom=document.getElementById('nom').value, prenom=document.getElementById('prenom').value;
+      if(!nom)return showToast("Saisis ton nom d'abord.");
+      const loader=document.getElementById('loaderOverlay');
+      if(loader)loader.style.display='flex';
+      google.script.run
+        .withSuccessHandler(function(lastData){
+          if(loader)loader.style.display='none';
+          if(!lastData||Object.keys(lastData).length===0)return showToast("⚠️ Aucun historique trouvé pour ce nom.");
+          try{
+            const cC=document.getElementById('clientsContainer'),cH=document.getElementById('horairesContainer');
+            if(!cC||!cH)return showToast("❌ Erreur : Conteneurs introuvables.");
+            if(lastData.hPau1&&document.getElementById('hPau1'))document.getElementById('hPau1').value=lastData.hPau1;
+            if(lastData.hPau2&&document.getElementById('hPau2'))document.getElementById('hPau2').value=lastData.hPau2;
+            if(lastData.dep&&document.getElementById('dep'))document.getElementById('dep').value=lastData.dep;
+            ['dej','midi','soir','nuit','ferie'].forEach(f=>{const el=document.getElementById(f);if(el)el.checked=!!lastData[f];});
+            cC.innerHTML='';cH.innerHTML='';
+            const clients=[lastData.c1,lastData.c2,lastData.c3].filter(c=>c&&typeof c==='object'&&c.nom);
+            if(clients.length===0)return showToast("⚠️ Données clients vides.");
+            clients.forEach((c,idx)=>{
+              ajouterClient();ajouterHoraire();
+              const bC=document.querySelectorAll('.client-block'),bH=document.querySelectorAll('.horaire-block');
+              const lC=bC[bC.length-1],lH=bH[bH.length-1];
+              if(lC&&lH){
+                const iN=lC.querySelector('.client'),iB=lC.querySelector('.ba');
+                if(iN)iN.value=c.nom||"";if(iB)iB.value=c.ba||"";
+                const sE=lC.querySelector('.engin');
+                if(sE&&c.engin){
+                  // Si engin pas dans la liste → le sauvegarder d'abord
+                  if(!Array.from(sE.options).some(o=>o.value===c.engin)){
+                    const enginsPerso=JSON.parse(localStorage.getItem('mediaco_engins_perso')||'[]');
+                    if(!enginsPerso.includes(c.engin)){enginsPerso.push(c.engin);localStorage.setItem('mediaco_engins_perso',JSON.stringify(enginsPerso));}
+                    ajouterOptionEnginDansSelects(c.engin);
+                  }
+                  // Maintenant sélectionner directement
+                  if(Array.from(sE.options).some(o=>o.value===c.engin)){sE.value=c.engin;}
+                  else{sE.value="AUTRE";const cu=lC.querySelector('.engin-custom');if(cu){cu.classList.remove('hidden');cu.value=c.engin||"";}}
+                }
+                if(lastData.horaires&&lastData.horaires[idx]){
+                  const h=lastData.horaires[idx];
+                  ['hDep1','hArr1','hAct1','hAct2','hDep2','hArr2'].forEach(f=>{const el=lH.querySelector('.'+f);if(el)el.value=h[f]||"";});
+                }
+              }
+            });
+            setTimeout(()=>{if(typeof calculerAuto==="function")calculerAuto();showToast("✅ Pointage précédent chargé !");},300);
+          }catch(e){showToast("❌ Erreur : "+e.message);}
+        })
+        .withFailureHandler(err=>{if(loader)loader.style.display='none';showToast("❌ Erreur : "+err);})
+        .getDerniersClients(nom,prenom);
+    }
+
+    function ajouterClient(){
+      const c=document.getElementById('clientsContainer'),d=document.createElement('div');
+      d.className="card client-block";
+      d.innerHTML=`<button type="button" onclick="supprimerBloc(this,'client')" style="float:right;color:#ff4444;border:none;background:none;font-weight:bold;font-size:18px;cursor:pointer;">✖</button>
+        <h4>Intervention</h4>
+        <input type="text" class="client" placeholder="CLIENT / CHANTIER" maxlength="33">
+        <input type="text" class="ba" placeholder="N° BA" inputmode="numeric">
+        <select class="engin" onchange="checkCustomEngin(this)">
+          <option value="">--ENGIN--</option>
+          <option value="LTM 10.40">LTM 10.40</option><option value="SANY 60">SANY 60</option>
+          <option value="LTM 10.60">LTM 10.60</option><option value="ATF 40">ATF 40</option>
+          <option value="LTM 10.70">LTM 10.70</option><option value="AC-35">AC-35</option>
+          <option value="AC-100">AC-100</option><option value="LTM 10.90">LTM 10.90</option>
+          <option value="MK-88">MK-88</option><option value="SPIERINGS">SPIERINGS</option>
+          <option value="LTC 10.55">LTC 10.55</option><option value="GROOVE 130">GROOVE 130</option>
+          <option value="Nacelle 57m">Nacelle 57m</option><option value="Nacelle 51m">Nacelle 51m</option>
+          <option value="Bras de grue">Bras de grue</option><option value="MAN Tracteur">MAN Tracteur</option>
+          <option value="AUTRE">+ PERSONNALISER</option>
+        </select>
+        <input type="text" class="engin-custom hidden" placeholder="Saisir le nom de l'engin" maxlength="14" onblur="sauvegarderEnginPerso(this)" onchange="sauvegarderEnginPerso(this)">
+        <div class="grid-2">
+          <div><label>Trajet (Automatique)</label><input type="number" class="trajet" step="0.25" placeholder="0.00" readonly></div>
+          <div><label>Activité (Automatique)</label><input type="number" class="activite" step="0.25" placeholder="0.00" readonly></div>
+        </div>`;
+      c.appendChild(d);
+      // Injecter les engins perso dans le nouveau select
+      chargerEnginsPerso();
+    }
+
+    function ajouterHoraire(){
+      const c=document.getElementById('horairesContainer'),d=document.createElement('div');
+      d.className="horaire-block";
+      d.innerHTML=`<button type="button" onclick="supprimerBloc(this,'horaire')" style="float:right;color:#ff4444;border:none;background:none;font-weight:bold;font-size:18px;cursor:pointer;">✖</button>
+        <div class="section-title section-trajet">📍 ALLER</div>
+        <div class="grid-2">
+          <div><label>Départ</label><input type="time" class="hDep1" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+          <div><label>Arrivée</label><input type="time" class="hArr1" oninput="synchroniserHeures(this,'aller')" onblur="arrondir30min(this)"></div>
+        </div>
+        <div class="section-title section-travail">🏗️ ACTIVITÉ</div>
+        <div class="grid-2">
+          <div><label>Début</label><input type="time" class="hAct1" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+          <div><label>Fin</label><input type="time" class="hAct2" oninput="synchroniserHeures(this,'act')" onblur="arrondir30min(this)"></div>
+        </div>
+        <div class="section-title section-trajet">📍 RETOUR</div>
+        <div class="grid-2">
+          <div><label>Départ</label><input type="time" class="hDep2" oninput="synchroniserHeures(this,'trajet')" onblur="arrondir30min(this)"></div>
+          <div><label>Retour</label><input type="time" class="hArr2" oninput="calculerAuto()" onblur="arrondir30min(this)"></div>
+        </div>`;
+      c.appendChild(d);
+    }
+
+    function ajouterInterventionComplete(){
+      if(document.querySelectorAll('.client-block').length>=4){showToast("⚠️ Maximum 4 interventions atteint");return;}
+      ajouterClient();ajouterHoraire();showToast("Nouvelle ligne ajoutée dans Rapport et Ligne de vie");
+    }
+
+    function ouvrirSignature(){ document.getElementById('signatureModal').style.display="block"; canvas.width=canvas.offsetWidth; canvas.height=300; ctx.strokeStyle="#000"; ctx.lineWidth=2; }
+    function fermerSignature(){ document.getElementById('signatureModal').style.display="none"; }
+    function effacerSig(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+
+    function ouvrirPage(nom){
+      document.getElementById('page-saisie').classList.toggle('hidden',nom!=='saisie');
+      document.getElementById('page-horaires').classList.toggle('hidden',nom!=='horaires');
+      document.getElementById('tab-saisie').classList.toggle('active',nom==='saisie');
+      document.getElementById('tab-horaires').classList.toggle('active',nom==='horaires');
+    }
+
+    function synchroniserHeures(el,type){
+      const bloc=el.closest('.horaire-block');
+      if(type==='aller') bloc.querySelector('.hAct1').value=el.value;
+      else if(type==='act') bloc.querySelector('.hDep2').value=el.value;
+      const hD1=bloc.querySelector('.hDep1').value,hA1=bloc.querySelector('.hArr1').value,hD2=bloc.querySelector('.hDep2').value;
+      if(hD1&&hA1&&hD2){
+        const dur=tToM(hA1)-tToM(hD1);
+        if(dur>0){const f=tToM(hD2)+dur;bloc.querySelector('.hArr2').value=String(Math.floor(f/60)).padStart(2,'0')+':'+String(f%60).padStart(2,'0');}
+      }
+      calculerAuto();
+    }
+
+    // ── Reset FCM token via tap long sur la nav (5 secondes) ──
+    (function() {
+      var pressTimer;
+      var nav = document.getElementById('navTabs');
+      if (!nav) return;
+      nav.addEventListener('touchstart', function() {
+        pressTimer = setTimeout(function() {
+          if (confirm('🔄 Réactiver les notifications ?')) {
+            localStorage.removeItem('mediaco_pin_github');
+            localStorage.removeItem('notif_asked');
+            localStorage.removeItem('fcm_token');
+            localStorage.removeItem('pending_fcm_token_github');
+            showToast('✅ Reset effectué — recharge l'app');
+          }
+        }, 3000); // 3 secondes
+      });
+      nav.addEventListener('touchend', function() { clearTimeout(pressTimer); });
+      nav.addEventListener('touchmove', function() { clearTimeout(pressTimer); });
+    })();
+
+    function checkCustomEngin(select) {
+      const c = select.parentElement.querySelector('.engin-custom');
+      if (c) c.classList.toggle('hidden', select.value !== "AUTRE");
+    }
+
+    // Sauvegarder un engin personnalisé dans localStorage
+    function sauvegarderEnginPerso(input) {
+      const val = input.value.trim();
+      if (!val) return;
+      const enginsPerso = JSON.parse(localStorage.getItem('mediaco_engins_perso') || '[]');
+      if (!enginsPerso.includes(val)) {
+        enginsPerso.push(val);
+        localStorage.setItem('mediaco_engins_perso', JSON.stringify(enginsPerso));
+        // Ajouter dans tous les selects engin actuels
+        ajouterOptionEnginDansSelects(val);
+      }
+    }
+
+    // Ajouter une option dans tous les selects .engin existants
+    function ajouterOptionEnginDansSelects(valEngin) {
+      document.querySelectorAll('select.engin').forEach(function(sel) {
+        // Vérifier si l'option existe déjà
+        if (!Array.from(sel.options).some(o => o.value === valEngin)) {
+          const opt = document.createElement('option');
+          opt.value = valEngin;
+          opt.textContent = valEngin;
+          // Insérer avant "AUTRE"
+          const autreOpt = Array.from(sel.options).find(o => o.value === 'AUTRE');
+          if (autreOpt) sel.insertBefore(opt, autreOpt);
+          else sel.appendChild(opt);
+        }
+      });
+    }
+
+    // Charger les engins perso au démarrage et les injecter dans tous les selects
+    function chargerEnginsPerso() {
+      const enginsPerso = JSON.parse(localStorage.getItem('mediaco_engins_perso') || '[]');
+      enginsPerso.forEach(function(val) {
+        ajouterOptionEnginDansSelects(val);
+      });
+    }
+
+    function arrondir30min(el){
+      if(!el.value)return;
+      const[h,m]=el.value.split(':').map(Number);
+      const arr=m<15?0:m<45?30:60;
+      const nh=arr===60?h+1:h,nm=arr===60?0:arr;
+      if(nh<24)el.value=String(nh).padStart(2,'0')+':'+String(nm).padStart(2,'0');
+      calculerAuto();
+    }
+
+    function getPos(e){ const r=canvas.getBoundingClientRect(); const cX=e.touches?e.touches[0].clientX:e.clientX; const cY=e.touches?e.touches[0].clientY:e.clientY; return{x:cX-r.left,y:cY-r.top}; }
+    canvas.addEventListener('mousedown',(e)=>{drawing=true;ctx.beginPath();const p=getPos(e);ctx.moveTo(p.x,p.y);});
+    canvas.addEventListener('mousemove',(e)=>{if(!drawing)return;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+    canvas.addEventListener('mouseup',()=>drawing=false);
+    canvas.addEventListener('touchstart',(e)=>{drawing=true;ctx.beginPath();const p=getPos(e);ctx.moveTo(p.x,p.y);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchmove',(e)=>{if(!drawing)return;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchend',()=>drawing=false);
+
+    function ouvrirProfil(){
+      document.getElementById('profilModal').style.display="block";
+      const lastPin=localStorage.getItem('mediaco_pin');
+      if(lastPin) document.getElementById('configPin').value=lastPin;
+      const p=JSON.parse(localStorage.getItem('mediaco_user')||'{}');
+      document.getElementById('configNom').value=p.nom||"";
+      document.getElementById('configPrenom').value=p.prenom||"";
+      document.getElementById('configEmail').value=p.email||"";
+      document.getElementById('configDrive').value=p.drive||"";
+      // BUG #3 FIX : pré-remplir le dépôt
+      if(document.getElementById('configDepot')) document.getElementById('configDepot').value=p.depot||"";
+    }
+
+    function fermerProfil(){ document.getElementById('profilModal').style.display="none"; }
+
+    function sauvegarderProfil(){
+      const pinRaw=document.getElementById('configPin').value.trim();
+      // BUG PIN 0xxx : normaliser le PIN avec padding
+      const pin=normaliserPin(pinRaw);
+      const nom=document.getElementById('configNom').value.toUpperCase().trim();
+      const prenom=document.getElementById('configPrenom').value.trim();
+      const email=document.getElementById('configEmail').value.trim();
+      const driveLien=document.getElementById('configDrive').value.trim();
+      // BUG #3 FIX : récupérer le dépôt
+      const depot=document.getElementById('configDepot').value.trim();
+      if(pin.length!==4)return showToast("Le PIN doit comporter 4 chiffres !");
+      if(!nom||!email)return showToast("Nom et Email obligatoires !");
+      if(!depot)return showToast("⚠️ Choisis ton dépôt !");
+      const loader=document.getElementById('loaderOverlay');
+      if(loader)loader.style.display='flex';
+      google.script.run
+        .withSuccessHandler(function(existe){
+          if(existe){
+            if(loader)loader.style.display='none';
+            showToast("⚠️ Ce code PIN est déjà utilisé par un autre collègue. Merci d'en choisir un autre !");
+          } else {
+            // BUG #3 FIX : inclure depot dans user
+            const user={pin,nom,prenom,email,drive:driveLien,depot};
+            google.script.run
+              .withSuccessHandler(function(msg){
+                if(loader)loader.style.display='none';
+                showToast(msg);
+                localStorage.setItem('mediaco_pin',pin);
+                localStorage.setItem('mediaco_user',JSON.stringify(user));
+                if(document.getElementById('nom'))document.getElementById('nom').value=nom;
+                if(document.getElementById('prenom'))document.getElementById('prenom').value=prenom;
+                document.getElementById('profilModal').style.display="none";
+                if(document.getElementById('bienvenueModal'))document.getElementById('bienvenueModal').style.display="none";
+              })
+              .withFailureHandler(function(err){if(loader)loader.style.display='none';showToast("Erreur : "+err);})
+              .enregistrerProfilServeur(user);
+          }
+        })
+        .withFailureHandler(function(err){if(loader)loader.style.display='none';showToast("Erreur connexion : "+err);})
+        .verifierPinExistant(pin);
+    }
+
+    function demanderBilanIntermediaire(){
+      const pin=localStorage.getItem('mediaco_pin');
+      if(!pin){showToast("⚠️ PIN introuvable. Re-connecte toi (👤)");return;}
+      document.getElementById('modalBilan').style.display='flex';
+    }
+
+    function envoyerBilanPeriode(mode){
+      const pin=localStorage.getItem('mediaco_pin');
+      const user=JSON.parse(localStorage.getItem('mediaco_user')||'{}');
+      const loader=document.getElementById('loaderOverlay');
+      document.getElementById('modalBilan').style.display='none';
+      if(mode==='manuel'){
+        const debut=document.getElementById('bilanDateDebut').value,fin=document.getElementById('bilanDateFin').value;
+        if(!debut||!fin){showToast("⚠️ Choisis une date début et fin");return;}
+        if(debut>fin){showToast("⚠️ La date début doit être avant la fin");return;}
+        if(loader)loader.style.display='flex';
+        google.script.run.withSuccessHandler(res=>{if(loader)loader.style.display='none';showToast("✅ "+res);}).withFailureHandler(err=>{if(loader)loader.style.display='none';showToast("❌ "+err);}).envoyerBilanMensuel(user.email||null,pin,debut,fin);
+      } else {
+        if(loader)loader.style.display='flex';
+        google.script.run.withSuccessHandler(res=>{if(loader)loader.style.display='none';showToast("✅ "+res);}).withFailureHandler(err=>{if(loader)loader.style.display='none';showToast("❌ "+err);}).envoyerBilanMensuel(user.email||null,pin);
+      }
+    }
+
+    function ouvrirLogin(){ document.getElementById('bienvenueModal').style.display="none"; document.getElementById('loginModal').style.display="block"; }
+    function ouvrirEnregistrement(){ document.getElementById('bienvenueModal').style.display="none"; document.getElementById('profilModal').style.display="block"; }
+    function retourBienvenue(){ document.getElementById('loginModal').style.display="none"; document.getElementById('profilModal').style.display="none"; document.getElementById('bienvenueModal').style.display="block"; }
+
+    function connexionViaPin(){
+      const pinRaw=document.getElementById('loginPin').value;
+      // BUG PIN 0xxx : normaliser le PIN
+      const pin=normaliserPin(pinRaw);
+      if(pin.length!==4)return showToast("Le PIN doit faire 4 chiffres.");
+      const loader=document.getElementById('loaderOverlay');
+      if(loader)loader.style.display='flex';
+      google.script.run
+        .withSuccessHandler(function(user){
+          if(loader)loader.style.display='none';
+          if(user&&user.nom){
+            if(document.getElementById('nom'))document.getElementById('nom').value=user.nom;
+            if(document.getElementById('prenom'))document.getElementById('prenom').value=user.prenom;
+            localStorage.setItem('mediaco_pin',pin);
+            localStorage.setItem('mediaco_user',JSON.stringify(user));
+            document.getElementById('loginModal').style.display="none";
+            if(document.getElementById('bienvenueModal'))document.getElementById('bienvenueModal').style.display="none";
+            showToast("Hey! ça geht's "+user.prenom+" ? 👋");
+            // Envoyer PIN au parent (GitHub Pages) pour le fetch FCM
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'MEDIACO_PIN', pin: pin }, '*');
+              console.log('[FCM] PIN envoyé au parent GitHub');
+            }
+            // Envoyer token pending via google.script.run
+            const pt=localStorage.getItem('pending_fcm_token');
+            if(pt){
+              google.script.run
+                .withSuccessHandler(function(res){
+                  console.log('[FCM] save après login → ' + res);
+                  if(res==='OK'){localStorage.removeItem('pending_fcm_token');showToast('🔔 Notifications activées !');}
+                })
+                .withFailureHandler(function(e){console.log('[FCM] Erreur: '+e);})
+                .sauvegarderFCMToken(pin,pt);
+            }
+          } else { showToast("Code PIN inconnu. Trompe toi pas STP. 😉"); }
+        })
+        .withFailureHandler(function(err){if(loader)loader.style.display='none';showToast("Erreur : "+err);})
+        .chargerProfilParPIN(pin);
+    }
+
+    function ouvrirRecap(){
+      calculerAuto();
+      const nom=document.getElementById('nom').value||'-',prenom=document.getElementById('prenom').value||'-';
+      const date=document.getElementById('dateInput').value,dateAff=date?date.split('-').reverse().join('/'): '-';
+      const dep=document.getElementById('dep').value||'-',pause=document.getElementById('pauseInput').value||'0';
+      const dej=document.getElementById('dej').checked,midi=document.getElementById('midi').checked,soir=document.getElementById('soir').checked;
+      const nuit=document.getElementById('nuit').checked,ferie=document.getElementById('ferie').checked;
+      const vehicule=document.getElementById('vehicule').value,temps=document.getElementById('temps').value,km=document.getElementById('km').value;
+      const commentaire=document.getElementById('commentaire').value;
+      const blocsC=document.querySelectorAll('.client-block'),blocsH=document.querySelectorAll('.horaire-block');
+      let html=`<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border-left:4px solid #FFD700;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:6px;">👤 Identité & Date</div>
+        <div style="font-weight:bold;font-size:15px;">${nom} ${prenom}</div>
+        <div style="color:#555;font-size:13px;">📅 ${dateAff}</div>
+        ${dep!=='-'?'<div style="color:#555;font-size:13px;">🚗 '+dep+'</div>':''}
+      </div>`;
+      let tT=0,tA=0;
+      blocsC.forEach((b,i)=>{
+        const client=b.querySelector('.client').value||'ATELIER',ba=b.querySelector('.ba').value;
+        const engin=b.querySelector('.engin').value==='AUTRE'?b.querySelector('.engin-custom').value:b.querySelector('.engin').value;
+        const trajet=parseFloat(b.querySelector('.trajet').value)||0,act=parseFloat(b.querySelector('.activite').value)||0;
+        tT+=trajet;tA+=act;
+        const bh=blocsH[i];
+        const d1=bh?bh.querySelector('.hDep1').value:'',a1=bh?bh.querySelector('.hArr1').value:'';
+        const ac1=bh?bh.querySelector('.hAct1').value:'',ac2=bh?bh.querySelector('.hAct2').value:'';
+        const d2=bh?bh.querySelector('.hDep2').value:'',a2=bh?bh.querySelector('.hArr2').value:'';
+        html+=`<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border-left:4px solid #4a86e8;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:6px;">🏗️ Intervention ${i+1}</div>
+          <div style="font-weight:bold;font-size:14px;">${client}</div>
+          ${ba?'<div style="color:#555;font-size:12px;">N° BA : '+ba+'</div>':''}
+          ${engin?'<div style="color:#555;font-size:12px;">🚛 '+engin+'</div>':''}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:12px;">
+            ${d1?'<div style="background:#f0f0f0;padding:5px;border-radius:5px;">🚗 Aller : '+d1+' → '+a1+'</div>':''}
+            ${ac1?'<div style="background:#f0f0f0;padding:5px;border-radius:5px;">🏗️ Activité : '+ac1+' → '+ac2+'</div>':''}
+            ${d2?'<div style="background:#f0f0f0;padding:5px;border-radius:5px;">🚗 Retour : '+d2+' → '+a2+'</div>':''}
+            ${trajet>0?'<div style="background:#dce8ff;padding:5px;border-radius:5px;">Trajet : <strong>'+trajet.toFixed(2)+'h</strong></div>':''}
+            ${act>0?'<div style="background:#dcffe4;padding:5px;border-radius:5px;">Activité : <strong>'+act.toFixed(2)+'h</strong></div>':''}
+          </div>
+        </div>`;
+      });
+      const hP1=document.getElementById('hPau1').value,hP2=document.getElementById('hPau2').value;
+      const hP3=document.getElementById('hPau3')?document.getElementById('hPau3').value:'';
+      const hP4=document.getElementById('hPau4')?document.getElementById('hPau4').value:'';
+      const paniers=[dej?'Déjeuner':'',midi?'Midi':'',soir?'Soir':''].filter(Boolean).join(', ')||'Aucun';
+      const options=[nuit?'🌙 Nuit':'',ferie?'🎉 Férié':''].filter(Boolean).join('  ')||'';
+      html+=`<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border-left:4px solid #ff9800;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:6px;">☕ Pauses & Options</div>
+        ${hP1?'<div style="font-size:13px;color:#555;">Pause 1 : '+hP1+' → '+hP2+' ('+pause+'h)</div>':''}
+        ${hP3?'<div style="font-size:13px;color:#555;">Pause 2 : '+hP3+' → '+hP4+'</div>':''}
+        <div style="font-size:13px;color:#555;">🍽️ Paniers : ${paniers}</div>
+        ${options?'<div style="font-size:13px;color:#555;">'+options+'</div>':''}
+      </div>`;
+      if(vehicule||km||temps){html+=`<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border-left:4px solid #28a745;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:6px;">🚘 Véhicule</div>
+        ${vehicule?'<div style="font-size:13px;color:#555;">Type : <strong>'+vehicule+'</strong></div>':''}
+        ${temps?'<div style="font-size:13px;color:#555;">Temps : <strong>'+temps+'h</strong></div>':''}
+        ${km?'<div style="font-size:13px;color:#555;">KM : <strong>'+km+' km</strong></div>':''}
+      </div>`;}
+      html+=`<div style="background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:11px;color:#aaa;text-transform:uppercase;margin-bottom:8px;">⏱️ Total journée</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;color:white;">
+          <div>🚗 Trajet : <strong style="color:#FFD700;">${tT.toFixed(2)}h</strong></div>
+          <div>🏗️ Activité : <strong style="color:#FFD700;">${tA.toFixed(2)}h</strong></div>
+          <div>☕ Pause : <strong style="color:#FFD700;">${parseFloat(pause).toFixed(2)}h</strong></div>
+          ${vehicule&&temps?'<div>🚘 Véhicule : <strong style="color:#FFD700;">'+parseFloat(temps||0).toFixed(2)+'h</strong></div>':''}
+        </div>
+      </div>`;
+      if(commentaire){html+=`<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;border-left:4px solid #999;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+        <div style="font-size:11px;color:#999;text-transform:uppercase;margin-bottom:4px;">💬 Commentaire</div>
+        <div style="font-size:13px;color:#555;">${commentaire}</div>
+      </div>`;}
+      document.getElementById('recap-content').innerHTML=html;
+      document.getElementById('modalRecap').style.display='block';
+      document.getElementById('modalRecap').scrollTop=0;
+    }
+
+    function validerTempsVehicule(el){
+      if(!el.value)return;
+      let v=parseFloat(el.value);
+      if(isNaN(v)||v<=0){el.value='';return;}
+      if(Number.isInteger(v)&&v>=5&&v<=59){const h=Math.round((v/60)*2)/2;el.value=h.toFixed(2);showToast("⏱️ "+v+" min → "+h.toFixed(2)+"h");return;}
+      if(v>24){const h2=Math.floor(v/100),m2=v%100;v=Math.round((h2+m2/60)*4)/4;el.value=v.toFixed(2);showToast("⏱️ Converti : "+v.toFixed(2)+"h");return;}
+      el.value=(Math.round(v*4)/4).toFixed(2);
+    }
+
+    function togglePause2(){
+      const s=document.getElementById('pause2-section'),b=document.getElementById('btn-pause2');
+      const v=s.style.display!=='none';
+      s.style.display=v?'none':'block';
+      b.innerText=v?'+ AJOUTER UNE 2ÈME PAUSE':'✕ SUPPRIMER LA 2ÈME PAUSE';
+      if(v){if(document.getElementById('hPau3'))document.getElementById('hPau3').value='';if(document.getElementById('hPau4'))document.getElementById('hPau4').value='';calculerAuto();}
+    }
+
+    function verifierPanier(){
+      const h=document.getElementById('hPau1').value,m=document.getElementById('midi');
+      if(h&&m){const[hh,mm]=h.split(':').map(Number);const mins=(hh*60)+mm;if(mins>=600&&mins<=840)m.checked=true;}
+    }
+
+    function envoyer(){
+      const storedUser=localStorage.getItem('mediaco_user');
+      if(!storedUser){showToast("⚠️ Profil manquant.");document.getElementById('profilModal').style.display='block';return;}
+      const user=JSON.parse(storedUser);
+      const loader=document.getElementById('loaderOverlay');
+      if(loader)loader.style.display='flex';
+      const btn=document.getElementById('btn-final-envoi');
+      if(btn){btn.disabled=true;btn.innerText="ENVOI EN COURS...";}
+      calculerAuto();
+      const bH=document.querySelectorAll('.horaire-block'),bC=document.querySelectorAll('.client-block');
+      const horairesData=Array.from(bH).map(b=>({hDep1:b.querySelector('.hDep1').value,hArr1:b.querySelector('.hArr1').value,hAct1:b.querySelector('.hAct1').value,hAct2:b.querySelector('.hAct2').value,hDep2:b.querySelector('.hDep2').value,hArr2:b.querySelector('.hArr2').value}));
+      const clientsData=Array.from(bC).map((b,i)=>{
+        const hS=bH[i]?bH[i].querySelector('.hAct1').value:"08:00";
+        let nS=b.querySelector('.client').value.trim();
+        if(nS===""){nS="ATELIER";b.querySelector('.client').value="ATELIER";}
+        return{nom:b.querySelector('.client').value,ba:b.querySelector('.ba').value,engin:b.querySelector('.engin').value==="AUTRE"?b.querySelector('.engin-custom').value:b.querySelector('.engin').value,t:b.querySelector('.trajet').value||0,act:b.querySelector('.activite').value||0,hAct1:hS};
+      });
+      const data={nom:user.nom||document.getElementById('nom').value,prenom:user.prenom||document.getElementById('prenom').value,pin:localStorage.getItem('mediaco_pin')||user.pin||"",pause:document.getElementById('pauseInput').value||"0,00",date:document.getElementById('dateInput').value,grilleTrajet:window.grilleTrajet||[],grilleActivite:window.grilleActivite||[],grillePause:window.grillePause||[],hPau1:document.getElementById('hPau1').value,hPau2:document.getElementById('hPau2').value,dep:document.getElementById('dep').value,dej:document.getElementById('dej').checked,midi:document.getElementById('midi').checked,soir:document.getElementById('soir').checked,nuit:document.getElementById('nuit').checked,ferie:document.getElementById('ferie').checked,vehicule:document.getElementById('vehicule').value,temps:document.getElementById('temps').value,km:document.getElementById('km').value,commentaire:document.getElementById('commentaire').value,signature:typeof canvas!=='undefined'?canvas.toDataURL():"",clients:clientsData,horaires:horairesData,userEmail:user.email||"",userDrive:user.drive||""};
+      google.script.run
+        .withSuccessHandler(function(res){
+          if(loader)loader.style.display='none';
+          if(btn){btn.disabled=false;btn.innerText="ENVOYER";}
+          showToast("🚀 Pointage archivé et transmit au service paie !");
+          localStorage.removeItem('mediaco_brouillon');
+          if(document.getElementById('signatureModal'))document.getElementById('signatureModal').style.display='none';
+          if(typeof canvas!=='undefined'){const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);}
+          reinitialiserInterface();
+        })
+        .withFailureHandler(function(err){if(loader)loader.style.display='none';showToast("❌ Erreur : "+err);if(btn){btn.disabled=false;btn.innerText="RÉESSAYER L'ENVOI";}})
+        .enregistrerTout(data);
+    }
+
+    function reinitialiserInterface(){
+      const p=['dateInput','nom','prenom','configEmail','configPrenom','configDrive'];
+      document.querySelectorAll('input,select,textarea').forEach(el=>{if(p.includes(el.id))return;if(el.type==='checkbox'||el.type==='radio')el.checked=false;else el.value='';});
+      if(document.getElementById('btn-final-envoi')){document.getElementById('btn-final-envoi').disabled=false;document.getElementById('btn-final-envoi').innerText="ENVOYER";}
+      if(document.getElementById('signatureModal'))document.getElementById('signatureModal').style.display='none';
+      if(typeof canvas!=='undefined'){const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);}
+    }
+  </script>
+<!-- MODALE SIGNALER UN BUG -->
+<div id="modalBugReport" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:10010; overflow-y:auto;">
+  <div style="background:#fff; margin:20% auto 40px auto; padding:20px; border-radius:15px; width:88%; max-width:400px; font-family:'Segoe UI',sans-serif;">
+    <h4 style="margin:0 0 15px; color:#dc3545; border-bottom:2px solid #dc3545; padding-bottom:8px;">🐛 Signaler un bug</h4>
+    <label style="font-size:12px; font-weight:bold; color:#555; display:block; margin-bottom:6px;">Décris le problème :</label>
+    <textarea id="bugDescription" rows="5" placeholder="Ex: Quand je clique sur Valider, rien ne se passe. L'heure affichée est 08:30..." 
+      style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:13px; resize:vertical; box-sizing:border-box; font-family:'Segoe UI',sans-serif;"></textarea>
+    <div style="margin-top:8px; padding:8px; background:#f9f9f9; border-radius:6px; font-size:11px; color:#999;">
+      📱 Infos auto : version navigateur, PIN, date/heure seront inclus
+    </div>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button onclick="fermerSignalerBug()" style="flex:1; padding:10px; background:#eee; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Annuler</button>
+      <button onclick="envoyerBugReport()" style="flex:2; padding:10px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">📤 Envoyer</button>
+    </div>
+  </div>
 </div>
-
-<!-- Notification permission banner -->
-<div id="notif-banner">
-    <p>🔔 <strong>Activer les notifications</strong><br>
-    Reçois une alerte si tu oublies de pointer !</p>
-    <button id="notif-accept-btn" onclick="demanderPermissionNotif()">✅ Activer</button>
-    <button id="notif-later-btn" onclick="dismissNotifBanner()">Plus tard</button>
-</div>
-
-
 
 <script>
-// ── Splash screen ──
-function hideLoader() {
-    document.getElementById('splash-screen').style.display = 'none';
-    document.getElementById('app-frame').style.display = 'block';
-
-    setTimeout(function() {
-        // Attendre que l'utilisateur soit connecté (PIN présent) avant de demander les notifs
-        const pinConnecte = localStorage.getItem('mediaco_pin');
-        if (pinConnecte && !localStorage.getItem('notif_asked') && Notification.permission === 'default') {
-            document.getElementById('notif-banner').style.display = 'block';
-        }
-    }, 5000);
-}
-setTimeout(function() { hideLoader(); }, 15000);
-
-// ══════════════════════════════════
-// FIREBASE FCM
-// ══════════════════════════════════
-firebase.initializeApp({
-    apiKey: "AIzaSyDLjmeAbZEUNrskkn-THIFzY7d8Brk4nAI",
-    authDomain: "pointage-mediaco.firebaseapp.com",
-    projectId: "pointage-mediaco",
-    storageBucket: "pointage-mediaco.firebasestorage.app",
-    messagingSenderId: "123659872809",
-    appId: "1:123659872809:web:6d94c82b2585652899ca38",
-    measurementId: "G-C1JWK63LNJ"
-});
-
-const messaging = firebase.messaging();
-const VAPID_KEY = "BEhXwNCHtFPGdHFkjJFREn6CV7dKL0yDamPxVjNWpNq9W1JnZ190x5CgecglOJ10n3iavfaoNaYGzs1RJflPz-A";
-
-let _swRegistration = null;
-
-if ('serviceWorker' in navigator) {
-    const swPath = window.location.pathname.includes('/pointage/') 
-        ? './firebase-messaging-sw.js'
-        : '/firebase-messaging-sw.js';
-    navigator.serviceWorker.register(swPath)
-        .then(function(reg) {
-            console.log('[FCM] ✅ SW enregistré:', reg.scope);
-            _swRegistration = reg;
-        })
-        .catch(function(err) {
-            console.warn('[FCM] ⚠️ SW erreur:', err);
-            afficherDebug('⚠️ SW erreur: ' + err.message);
-        });
+function ouvrirSignalerBug() {
+  document.getElementById('bugDescription').value = '';
+  document.getElementById('modalBugReport').style.display = 'block';
 }
 
-messaging.onMessage(function(payload) {
-    // Message reçu en foreground — le Service Worker gère déjà l'affichage
-    // On ne crée PAS de nouvelle Notification ici pour éviter le doublon
-    console.log('[FCM] Message foreground reçu (affiché par SW):', payload);
-});
-
-// ── Reset localStorage + relancer la demande de permission
-
-
-function demanderPermissionNotif() {
-    dismissNotifBanner();
-    localStorage.setItem('notif_asked', '1');
-    // Demander le PIN si pas encore connu sur ce domaine
-    if (!localStorage.getItem('mediaco_pin_github')) {
-        var pin = prompt('Entre ton code PIN (4 chiffres) pour activer les notifications :');
-        if (pin && pin.trim().length >= 1) {
-            localStorage.setItem('mediaco_pin_github', String(parseInt(pin)||pin).padStart(4,'0'));
-        }
-    }
-    Notification.requestPermission().then(function(permission) {
-        if (permission === 'granted') {
-            obtenirEtEnvoyerToken();
-        }
-    });
+function fermerSignalerBug() {
+  document.getElementById('modalBugReport').style.display = 'none';
 }
 
-function dismissNotifBanner() {
-    document.getElementById('notif-banner').style.display = 'none';
-}
+function envoyerBugReport() {
+  const desc = document.getElementById('bugDescription').value.trim();
+  if (!desc) { alert('Décris le bug avant d'envoyer !'); return; }
 
-// ── URL Apps Script déployée
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec';
+  const user = JSON.parse(localStorage.getItem('mediaco_user') || '{}');
+  const pin  = localStorage.getItem('mediaco_pin') || 'inconnu';
+  const infos = {
+    description: desc,
+    utilisateur: (user.prenom || '') + ' ' + (user.nom || ''),
+    pin: pin,
+    date: new Date().toLocaleString('fr-FR'),
+    navigateur: navigator.userAgent,
+    url: window.location.href
+  };
 
-// ── Envoyer token FCM via GET direct vers Apps Script (pas de cross-origin issue)
-function envoyerTokenFCMauServeur(token) {
-    const pin = localStorage.getItem('mediaco_pin_github');
-    if (!pin) {
-        afficherDebug('⏳ PIN pas encore connu — token stocké, attente PIN...');
-        localStorage.setItem('pending_fcm_token_github', token);
-        return;
-    }
-    afficherDebug('📤 Envoi vers Apps Script — PIN: ' + pin);
-    // Utiliser une image (no-cors) pour contourner CORS sur GET Apps Script
-    var url = APPS_SCRIPT_URL + '?action=saveFCMToken&pin=' + encodeURIComponent(pin) + '&token=' + encodeURIComponent(token);
-    var img = new Image();
-    img.onload = function() { afficherDebug('✅ Token envoyé (img)'); };
-    img.onerror = function() {
-        localStorage.removeItem('pending_fcm_token_github');
-    };
-    img.src = url;
-    // Fetch no-cors
-    fetch(url, { method: 'GET', mode: 'no-cors' })
-      .then(function() { localStorage.removeItem('pending_fcm_token_github'); })
-      .catch(function(err) { console.log('[FCM] Fetch erreur:', err.message); });
-}
+  const loader = document.getElementById('loaderOverlay');
+  if (loader) loader.style.display = 'flex';
+  fermerSignalerBug();
 
-// Recevoir le PIN depuis l'iframe Apps Script
-window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'MEDIACO_PIN') {
-        const pin = event.data.pin;
-        if (pin) {
-            localStorage.setItem('mediaco_pin_github', pin);
-            afficherDebug('📌 PIN reçu depuis iframe: ' + pin);
-            const pending = localStorage.getItem('pending_fcm_token_github');
-            if (pending) envoyerTokenFCMauServeur(pending);
-        }
-    }
-});
-
-// Vérifier toutes les 5s si PIN disponible + token en attente
-// S'arrête dès que l'envoi réussit
-var _fcmRetryInterval = setInterval(function() {
-    const pin = localStorage.getItem('mediaco_pin_github');
-    const pending = localStorage.getItem('pending_fcm_token_github');
-    if (pin && pending) {
-        clearInterval(_fcmRetryInterval);
-        envoyerTokenFCMauServeur(pending);
-    }
-}, 5000);
-
-function obtenirEtEnvoyerToken() {
-    afficherDebug('🚀 Génération token FCM...');
-    navigator.serviceWorker.ready.then(function(reg) {
-        afficherDebug('SW scope: ' + reg.scope);
-        return reg.pushManager.getSubscription().then(function(sub) {
-            if (sub) {
-                afficherDebug('🗑️ Ancien abonnement supprimé');
-                return sub.unsubscribe().then(() => reg);
-            }
-            return reg;
-        });
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (loader) loader.style.display = 'none';
+      showToast('✅ Bug signalé, merci !');
     })
-    .then(function(reg) {
-        return messaging.getToken({ 
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: reg
-        });
+    .withFailureHandler(function(err) {
+      if (loader) loader.style.display = 'none';
+      showToast('❌ Erreur envoi : ' + err);
     })
-    .then(function(token) {
-        if (!token) { afficherDebug('❌ Pas de token généré'); return; }
-        afficherDebug('✅ Token: ' + token.substring(0, 25) + '...');
-        // Toujours mettre à jour le token (il peut avoir changé/expiré)
-        localStorage.setItem('fcm_token', token);
-        localStorage.setItem('pending_fcm_token_github', token);
-        envoyerTokenFCMauServeur(token);
-    })
-    .catch(function(err) {
-        afficherDebug('❌ ' + err.message + (err.code ? ' [' + err.code + ']' : ''));
-    });
+    .envoyerRapportBug(infos);
 }
-
-// ── Log console uniquement (pas d'affichage visible)
-function afficherDebug(msg) {
-    console.log('[FCM]', msg);
-}
-
-window.addEventListener('load', function() {
-    if (Notification.permission === 'granted') {
-        setTimeout(obtenirEtEnvoyerToken, 3000);
-    }
-    window.debugFCMToken = function() { obtenirEtEnvoyerToken(); };
-});
-
-// ══════════════════════════════════
-// PWA Install
-// ══════════════════════════════════
-var _deferredInstall = null;
-
-function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; }
-function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-}
-
-window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault(); _deferredInstall = e;
-    // Vérifier toutes les 2s si le PIN est connecté, puis afficher
-    var checkPin = setInterval(function() {
-        if (localStorage.getItem('mediaco_pin_github')) {
-            clearInterval(checkPin);
-            setTimeout(showInstallBanner, 2000);
-        }
-    }, 2000);
-    setTimeout(function() { clearInterval(checkPin); }, 300000);
-});
-
-function showInstallBanner() {
-    if (isStandalone()) return;
-    if (localStorage.getItem('pwa_installed')) return; // déjà installé
-    // Ne pas afficher si déjà refusé cette session
-    if (sessionStorage.getItem('pwa_dismissed_session')) return;
-    // Ne pas afficher si pas encore connecté
-    if (!localStorage.getItem('mediaco_pin_github')) return;
-    var banner = document.getElementById('pwa-install-banner');
-    if (!banner) return;
-    if (isIOS()) {
-        banner.style.display = 'block';
-        document.getElementById('pwa-install-btn').style.display = 'none';
-        document.getElementById('pwa-ios-hint').style.display = 'block';
-    } else if (_deferredInstall) {
-        banner.style.display = 'block';
-    } else {
-        banner.style.display = 'block';
-        document.getElementById('pwa-install-btn').style.display = 'none';
-        document.getElementById('pwa-ios-hint').innerHTML =
-            'Sur <strong>Android</strong> : appuie sur ⋮ <strong>Menu</strong><br>' +
-            'puis <strong>"Ajouter à l\'écran d\'accueil"</strong> ➕' +
-            '<br><span class="pwa-hint-btn" onclick="dismissPWA()">J\'ai compris ✓</span>' +
-            '<span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>';
-        document.getElementById('pwa-ios-hint').style.display = 'block';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('pwa-install-btn').addEventListener('click', function() {
-        if (!_deferredInstall) return;
-        _deferredInstall.prompt();
-        _deferredInstall.userChoice.then(function(r) {
-            if (r.outcome === 'accepted') dismissPWAForever();
-            _deferredInstall = null;
-        });
-    });
-    document.getElementById('pwa-dismiss-btn').addEventListener('click', dismissPWAForever);
-    if (isIOS() && !isStandalone() && !sessionStorage.getItem('pwa_dismissed_session') && localStorage.getItem('mediaco_pin_github')) {
-        setTimeout(showInstallBanner, 3000);
-    }
-});
-
-function dismissPWA() { document.getElementById('pwa-install-banner').style.display = 'none'; }
-function dismissPWAForever() {
-    document.getElementById('pwa-install-banner').style.display = 'none';
-    // Juste pour la session — pas de localStorage permanent
-    sessionStorage.setItem('pwa_dismissed_session', '1');
-}
-window.addEventListener('appinstalled', function() {
-    document.getElementById('pwa-install-banner').style.display = 'none';
-    localStorage.setItem('pwa_installed', '1'); // installé = ne plus jamais afficher
-});
 </script>
+
 </body>
 </html>
