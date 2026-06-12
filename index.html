@@ -121,6 +121,15 @@
 function hideLoader() {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('app-frame').style.display = 'block';
+    // ?reset=1 dans l'URL → vider le PIN GitHub pour forcer redemande
+    if (window.location.search.includes('reset=1')) {
+        localStorage.removeItem('mediaco_pin_github');
+        localStorage.removeItem('notif_asked');
+        localStorage.removeItem('fcm_token');
+        localStorage.removeItem('pending_fcm_token_github');
+        // Nettoyer l'URL sans recharger
+        history.replaceState({}, '', window.location.pathname);
+    }
 
     setTimeout(function() {
         // Attendre que l'utilisateur soit connecté (PIN présent) avant de demander les notifs
@@ -221,15 +230,29 @@ function envoyerTokenFCMauServeur(token) {
       .catch(function(err) { console.log('[FCM] Fetch erreur:', err.message); });
 }
 
-// Recevoir le PIN depuis l'iframe Apps Script
+// Recevoir messages depuis l'iframe Apps Script
 window.addEventListener('message', function(event) {
-    if (event.data && event.data.type === 'MEDIACO_PIN') {
+    if (!event.data) return;
+
+    // PIN reçu → tenter envoi token en attente
+    if (event.data.type === 'MEDIACO_PIN') {
         const pin = event.data.pin;
         if (pin) {
             localStorage.setItem('mediaco_pin_github', pin);
-            afficherDebug('📌 PIN reçu depuis iframe: ' + pin);
             const pending = localStorage.getItem('pending_fcm_token_github');
             if (pending) envoyerTokenFCMauServeur(pending);
+        }
+    }
+
+    // Reset FCM → regénérer un nouveau token
+    if (event.data.type === 'RESET_FCM') {
+        afficherDebug('🔄 Reset FCM demandé depuis app...');
+        localStorage.removeItem('fcm_token');
+        localStorage.removeItem('pending_fcm_token_github');
+        if (Notification.permission === 'granted') {
+            obtenirEtEnvoyerToken();
+        } else {
+            demanderPermissionNotif();
         }
     }
 });
@@ -283,7 +306,19 @@ function afficherDebug(msg) {
 
 window.addEventListener('load', function() {
     if (Notification.permission === 'granted') {
-        setTimeout(obtenirEtEnvoyerToken, 3000);
+        setTimeout(function() {
+            // PIN déjà connu → regénérer token silencieusement à chaque ouverture
+            if (localStorage.getItem('mediaco_pin_github')) {
+                obtenirEtEnvoyerToken();
+            } else {
+                // PIN inconnu → demander une seule fois, puis plus jamais
+                var pin = prompt('Entre ton code PIN (4 chiffres) pour activer les notifications :');
+                if (pin && pin.trim()) {
+                    localStorage.setItem('mediaco_pin_github', String(parseInt(pin.trim())||pin.trim()).padStart(4,'0'));
+                    obtenirEtEnvoyerToken();
+                }
+            }
+        }, 3000);
     }
     window.debugFCMToken = function() { obtenirEtEnvoyerToken(); };
 });
