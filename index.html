@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MEDIACO - Pointage</title>
 
-<!-- MANIFEST PROPRE (non-encodé) -->
 <link rel="manifest" href="./manifest.json">
-
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
@@ -18,103 +16,34 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fbbc04">
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <style>
-    body, html { 
-        margin: 0; padding: 0; height: 100%; width: 100%;
-        overflow: hidden; background-color: #000;
-    }
-    iframe {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%; height: 100dvh;
-        border: none; display: none; 
-    }
-    #splash-screen {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: #fbbc04;
-        display: flex; flex-direction: column;
-        justify-content: center; align-items: center; z-index: 9999;
-    }
-    .loader {
-        border: 6px solid #fff; border-top: 6px solid #000;
-        border-radius: 50%; width: 50px; height: 50px;
-        animation: spin 1s linear infinite; margin-bottom: 20px;
-    }
+    body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #000; }
+    iframe { position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; border: none; display: none; }
+    #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #fbbc04; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+    .loader { border: 6px solid #fff; border-top: 6px solid #000; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .loading-text {
-        font-family: Arial, sans-serif; font-weight: bold; color: #000;
-        text-transform: uppercase; letter-spacing: 2px; font-size: 14px;
-    }
-
-    /* ── PWA Install Banner ── */
-    #pwa-install-banner {
-        display: none; position: fixed; bottom: 1.5rem; left: 50%;
-        transform: translateX(-50%); z-index: 99999;
-        width: calc(100% - 2rem); max-width: 420px;
-        font-family: Arial, sans-serif;
-    }
-    #pwa-install-banner .banner-inner {
-        background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        border: 1px solid rgba(251,188,4,0.5); border-radius: 18px;
-        padding: 1rem 1.2rem; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-        display: flex; align-items: center; gap: 1rem;
-    }
+    .loading-text { font-family: Arial, sans-serif; font-weight: bold; color: #000; text-transform: uppercase; letter-spacing: 2px; font-size: 14px; }
+    #pwa-install-banner { display: none; position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 99999; width: calc(100% - 2rem); max-width: 420px; font-family: Arial, sans-serif; }
+    #pwa-install-banner .banner-inner { background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 1px solid rgba(251,188,4,0.5); border-radius: 18px; padding: 1rem 1.2rem; box-shadow: 0 8px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 1rem; }
     .banner-logo { font-size: 2.2rem; flex-shrink: 0; }
     .banner-text { flex: 1; min-width: 0; }
     .banner-title { font-size: 0.95rem; color: #fbbc04; font-weight: 700; letter-spacing: 1px; }
-    .banner-sub   { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
+    .banner-sub { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
     .banner-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
-    #pwa-install-btn {
-        background: #fbbc04; color: #000; border: none; border-radius: 20px;
-        padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700;
-        cursor: pointer; white-space: nowrap;
-    }
-    #pwa-dismiss-btn {
-        background: none; border: none; color: rgba(255,255,255,0.35);
-        font-size: 0.7rem; cursor: pointer; text-align: center;
-    }
-    #pwa-ios-hint {
-        display: none; background: rgba(26,26,26,0.97);
-        border: 1px solid rgba(251,188,4,0.25); border-radius: 12px;
-        padding: 0.9rem 1.1rem; margin-top: 0.6rem;
-        font-size: 0.8rem; color: rgba(255,255,255,0.75);
-        line-height: 1.8; text-align: center;
-    }
+    #pwa-install-btn { background: #fbbc04; color: #000; border: none; border-radius: 20px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    #pwa-dismiss-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 0.7rem; cursor: pointer; text-align: center; }
+    #pwa-ios-hint { display: none; background: rgba(26,26,26,0.97); border: 1px solid rgba(251,188,4,0.25); border-radius: 12px; padding: 0.9rem 1.1rem; margin-top: 0.6rem; font-size: 0.8rem; color: rgba(255,255,255,0.75); line-height: 1.8; text-align: center; }
     #pwa-ios-hint strong { color: #fbbc04; }
-    .pwa-hint-btn {
-        display: inline-block; margin-top: 0.5rem;
-        background: rgba(251,188,4,0.15); border: 1px solid rgba(251,188,4,0.35);
-        border-radius: 20px; padding: 0.3rem 1rem;
-        font-size: 0.72rem; color: #fbbc04; cursor: pointer;
-    }
-    .pwa-hint-never {
-        display: block; margin-top: 6px;
-        font-size: 0.65rem; color: rgba(255,255,255,0.25); cursor: pointer;
-    }
-
-    /* ── Notif permission banner ── */
-    #notif-banner {
-        display: none; position: fixed; top: 1rem; left: 50%;
-        transform: translateX(-50%); z-index: 99998;
-        width: calc(100% - 2rem); max-width: 420px;
-        background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        border: 1px solid rgba(251,188,4,0.4); border-radius: 14px;
-        padding: 0.9rem 1.1rem; font-family: Arial, sans-serif;
-        box-shadow: 0 6px 30px rgba(0,0,0,0.5); text-align: center;
-    }
+    .pwa-hint-btn { display: inline-block; margin-top: 0.5rem; background: rgba(251,188,4,0.15); border: 1px solid rgba(251,188,4,0.35); border-radius: 20px; padding: 0.3rem 1rem; font-size: 0.72rem; color: #fbbc04; cursor: pointer; }
+    .pwa-hint-never { display: block; margin-top: 6px; font-size: 0.65rem; color: rgba(255,255,255,0.25); cursor: pointer; }
+    #notif-banner { display: none; position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 99998; width: calc(100% - 2rem); max-width: 420px; background: linear-gradient(135deg, #1a1a1a, #2a2a2a); border: 1px solid rgba(251,188,4,0.4); border-radius: 14px; padding: 0.9rem 1.1rem; font-family: Arial, sans-serif; box-shadow: 0 6px 30px rgba(0,0,0,0.5); text-align: center; }
     #notif-banner p { margin: 0 0 0.6rem; color: white; font-size: 0.85rem; }
     #notif-banner strong { color: #fbbc04; }
-    #notif-accept-btn {
-        background: #fbbc04; color: #000; border: none; border-radius: 20px;
-        padding: 0.45rem 1.2rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-right: 8px;
-    }
-    #notif-later-btn {
-        background: none; border: none; color: rgba(255,255,255,0.4);
-        font-size: 0.72rem; cursor: pointer;
-    }
+    #notif-accept-btn { background: #fbbc04; color: #000; border: none; border-radius: 20px; padding: 0.45rem 1.2rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; margin-right: 8px; }
+    #notif-later-btn { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 0.72rem; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -159,6 +88,12 @@
     <button id="notif-later-btn" onclick="dismissNotifBanner()">Plus tard</button>
 </div>
 
+<!-- Bouton reset + test notifs (temporaire debug) -->
+<button onclick="resetEtTesterNotifs()" 
+style="position:fixed;bottom:10px;left:10px;z-index:99999;background:#fbbc04;color:#000;padding:10px 15px;border:none;border-radius:8px;font-weight:bold;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+🔔 Tester notifs
+</button>
+
 <script>
 // ── Splash screen ──
 function hideLoader() {
@@ -188,21 +123,20 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 const VAPID_KEY = "BEhXwNCHtFPGdHFkjJFREn6CV7dKL0yDamPxVjNWpNq9W1JnZ190x5CgecglOJ10n3iavfaoNaYGzs1RJflPz-A";
 
-// Variable globale pour stocker le service worker enregistré
 let _swRegistration = null;
 
 if ('serviceWorker' in navigator) {
     const swPath = window.location.pathname.includes('/pointage/') 
-        ? './firebase-messaging-sw.js'  // Dans /pointage/
-        : '/firebase-messaging-sw.js';   // À la racine
-    
+        ? './firebase-messaging-sw.js'
+        : '/firebase-messaging-sw.js';
     navigator.serviceWorker.register(swPath)
         .then(function(reg) {
             console.log('[FCM] ✅ SW enregistré:', reg.scope);
-            _swRegistration = reg;  // On garde la référence
+            _swRegistration = reg;
         })
         .catch(function(err) {
             console.warn('[FCM] ⚠️ SW erreur:', err);
+            afficherDebug('⚠️ SW erreur: ' + err.message);
         });
 }
 
@@ -215,15 +149,30 @@ messaging.onMessage(function(payload) {
     }
 });
 
+// ── Reset localStorage + relancer la demande de permission
+function resetEtTesterNotifs() {
+    localStorage.removeItem('notif_asked');
+    localStorage.removeItem('fcm_token');
+    localStorage.removeItem('fcm_url_sent');
+    afficherDebug('🔄 Reset OK — permission: ' + Notification.permission);
+    if (Notification.permission === 'granted') {
+        afficherDebug('✅ Permission déjà accordée, génération token...');
+        obtenirEtEnvoyerToken();
+    } else if (Notification.permission === 'denied') {
+        afficherDebug('❌ Notifications BLOQUÉES dans les réglages du navigateur. Va dans Réglages > Notifications pour autoriser.');
+    } else {
+        afficherDebug('⏳ Demande de permission...');
+        demanderPermissionNotif();
+    }
+}
+
 function demanderPermissionNotif() {
     dismissNotifBanner();
     localStorage.setItem('notif_asked', '1');
     Notification.requestPermission().then(function(permission) {
+        afficherDebug('Permission: ' + permission);
         if (permission === 'granted') {
-            console.log('[FCM] Permission accordée');
             obtenirEtEnvoyerToken();
-        } else {
-            console.log('[FCM] Permission refusée');
         }
     });
 }
@@ -233,57 +182,70 @@ function dismissNotifBanner() {
 }
 
 function obtenirEtEnvoyerToken() {
-  console.log('[FCM] 🚀 Début getToken...');
-  
-  navigator.serviceWorker.ready.then(function(reg) {
-    console.log('[FCM] SW prêt:', reg.scope);
-    
-    return reg.pushManager.getSubscription().then(function(sub) {
-      if (sub) return sub.unsubscribe().then(() => reg);
-      return reg;
+    afficherDebug('🚀 Génération token FCM...');
+    navigator.serviceWorker.ready.then(function(reg) {
+        afficherDebug('SW scope: ' + reg.scope);
+        return reg.pushManager.getSubscription().then(function(sub) {
+            if (sub) {
+                afficherDebug('🗑️ Ancien abonnement supprimé');
+                return sub.unsubscribe().then(() => reg);
+            }
+            return reg;
+        });
+    })
+    .then(function(reg) {
+        return messaging.getToken({ 
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: reg
+        });
+    })
+    .then(function(token) {
+        if (!token) { afficherDebug('❌ Pas de token généré'); return; }
+        afficherDebug('✅ Token: ' + token.substring(0, 25) + '...');
+        localStorage.setItem('fcm_token', token);
+
+        // Envoyer au serveur Apps Script via postMessage
+        var iframe = document.getElementById('app-frame');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
+            afficherDebug('📨 postMessage envoyé');
+        }
+
+        // Fallback : recharger iframe avec token dans URL
+        if (iframe && !localStorage.getItem('fcm_url_sent')) {
+            localStorage.setItem('fcm_url_sent', '1');
+            var base = iframe.src.split('?')[0];
+            iframe.src = base + '?fcmtoken=' + encodeURIComponent(token);
+            afficherDebug('🔄 Iframe rechargée avec token URL');
+        }
+    })
+    .catch(function(err) {
+        afficherDebug('❌ ' + err.message + (err.code ? ' [' + err.code + ']' : ''));
     });
-  })
-  .then(function(reg) {
-    return messaging.getToken({ 
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: reg
-    });
-  })
-  .then(function(token) {
-    if (!token) {
-      afficherDebug('❌ Pas de token généré');
-      return;
-    }
-    afficherDebug('✅ Token OK: ' + token.substring(0, 20) + '...');
-    localStorage.setItem('fcm_token', token);
-    
-    var iframe = document.getElementById('app-frame');
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
-    }
-    if (iframe && !localStorage.getItem('fcm_url_sent')) {
-      localStorage.setItem('fcm_url_sent', '1');
-      var base = iframe.src.split('?')[0];
-      iframe.src = base + '?fcmtoken=' + encodeURIComponent(token);
-    }
-  })
-  .catch(function(err) {
-    afficherDebug('❌ Erreur: ' + err.message + ' | code: ' + err.code);
-  });
 }
 
-// Affiche un message visible sur mobile
+// ── Affichage debug visible sur mobile ──
 function afficherDebug(msg) {
-  console.log('[FCM]', msg);
-  var d = document.getElementById('fcm-debug');
-  if (!d) {
-    d = document.createElement('div');
-    d.id = 'fcm-debug';
-    d.style = 'position:fixed;bottom:60px;left:10px;right:10px;background:rgba(0,0,0,0.85);color:#0f0;font-size:11px;padding:8px;border-radius:8px;z-index:99999;font-family:monospace;max-height:120px;overflow-y:auto;';
-    document.body.appendChild(d);
-  }
-  d.innerHTML += msg + '<br>';
+    console.log('[FCM]', msg);
+    var d = document.getElementById('fcm-debug');
+    if (!d) {
+        d = document.createElement('div');
+        d.id = 'fcm-debug';
+        d.style = 'position:fixed;bottom:55px;left:10px;right:10px;background:rgba(0,0,0,0.9);color:#0f0;font-size:11px;padding:8px;border-radius:8px;z-index:99999;font-family:monospace;max-height:150px;overflow-y:auto;';
+        document.body.appendChild(d);
+    }
+    var line = document.createElement('div');
+    line.textContent = new Date().toLocaleTimeString('fr') + ' ' + msg;
+    d.appendChild(line);
+    d.scrollTop = d.scrollHeight;
 }
+
+window.addEventListener('load', function() {
+    if (Notification.permission === 'granted') {
+        setTimeout(obtenirEtEnvoyerToken, 3000);
+    }
+    window.debugFCMToken = function() { obtenirEtEnvoyerToken(); };
+});
 
 // ══════════════════════════════════
 // PWA Install
