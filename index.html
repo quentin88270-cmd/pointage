@@ -157,12 +157,23 @@ function resetEtTesterNotifs() {
     localStorage.removeItem('notif_asked');
     localStorage.removeItem('fcm_token');
     localStorage.removeItem('fcm_url_sent');
+    localStorage.removeItem('pending_fcm_token_github');
     afficherDebug('🔄 Reset OK — permission: ' + Notification.permission);
+
+    // Demander le PIN directement ici si pas encore connu
+    if (!localStorage.getItem('mediaco_pin_github')) {
+        var pin = prompt('Entre ton code PIN (4 chiffres) pour activer les notifications :');
+        if (pin && pin.length >= 4) {
+            localStorage.setItem('mediaco_pin_github', pin.padStart(4,'0'));
+            afficherDebug('📌 PIN enregistré: ' + pin.padStart(4,'0'));
+        }
+    }
+
     if (Notification.permission === 'granted') {
-        afficherDebug('✅ Permission déjà accordée, génération token...');
+        afficherDebug('✅ Permission accordée, génération token...');
         obtenirEtEnvoyerToken();
     } else if (Notification.permission === 'denied') {
-        afficherDebug('❌ Notifications BLOQUÉES dans les réglages du navigateur. Va dans Réglages > Notifications pour autoriser.');
+        afficherDebug('❌ Notifications BLOQUÉES — Réglages > Notifications pour autoriser.');
     } else {
         afficherDebug('⏳ Demande de permission...');
         demanderPermissionNotif();
@@ -184,32 +195,32 @@ function dismissNotifBanner() {
     document.getElementById('notif-banner').style.display = 'none';
 }
 
-// ── Envoyer token FCM directement à Apps Script via fetch (sans iframe)
+// ── URL Apps Script déployée
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec';
+
+// ── Envoyer token FCM via GET direct vers Apps Script (pas de cross-origin issue)
 function envoyerTokenFCMauServeur(token) {
-    // Récupérer le PIN depuis localStorage de l'iframe Apps Script
-    // On utilise un hack : lire depuis notre propre localStorage (GitHub Pages)
-    // Le PIN est stocké dans l'iframe (domaine different) donc inaccessible
-    // → On stocke une copie du PIN ici depuis l'iframe via postMessage
     const pin = localStorage.getItem('mediaco_pin_github');
     if (!pin) {
-        afficherDebug('⏳ PIN pas encore connu ici — attente...');
+        afficherDebug('⏳ PIN pas encore connu — token stocké, attente PIN...');
         localStorage.setItem('pending_fcm_token_github', token);
         return;
     }
-    afficherDebug('📤 Envoi token FCM au serveur pour PIN ' + pin);
-    fetch('https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'saveFCMToken', pin: pin, token: token })
-    })
-    .then(r => r.json())
-    .then(data => {
-        afficherDebug('✅ Serveur: ' + data.status);
-        if (data.status === 'OK') {
-            localStorage.removeItem('pending_fcm_token_github');
-        }
-    })
-    .catch(err => afficherDebug('❌ Fetch erreur: ' + err.message));
+    afficherDebug('📤 Envoi vers Apps Script — PIN: ' + pin);
+    // Utiliser une image (no-cors) pour contourner CORS sur GET Apps Script
+    var url = APPS_SCRIPT_URL + '?action=saveFCMToken&pin=' + encodeURIComponent(pin) + '&token=' + encodeURIComponent(token);
+    var img = new Image();
+    img.onload = function() { afficherDebug('✅ Token envoyé (img)'); };
+    img.onerror = function() {
+        // Normal — Apps Script renvoie JSON pas une image, mais la requête passe quand même
+        afficherDebug('✅ Requête envoyée (vérifier col G)');
+        localStorage.removeItem('pending_fcm_token_github');
+    };
+    img.src = url;
+    // Aussi tenter fetch no-cors
+    fetch(url, { method: 'GET', mode: 'no-cors' })
+      .then(function() { afficherDebug('✅ Fetch no-cors envoyé'); localStorage.removeItem('pending_fcm_token_github'); })
+      .catch(function(err) { afficherDebug('⚠️ Fetch: ' + err.message); });
 }
 
 // Recevoir le PIN depuis l'iframe Apps Script
@@ -218,13 +229,23 @@ window.addEventListener('message', function(event) {
         const pin = event.data.pin;
         if (pin) {
             localStorage.setItem('mediaco_pin_github', pin);
-            afficherDebug('📌 PIN reçu: ' + pin);
-            // Si token en attente → envoyer maintenant
+            afficherDebug('📌 PIN reçu depuis iframe: ' + pin);
             const pending = localStorage.getItem('pending_fcm_token_github');
             if (pending) envoyerTokenFCMauServeur(pending);
         }
     }
 });
+
+// Vérifier toutes les 2s si PIN disponible dans localStorage GitHub
+// (le PIN est copié ici lors de la connexion via INDEX_STABLE → postMessage)
+setInterval(function() {
+    const pin = localStorage.getItem('mediaco_pin_github');
+    const pending = localStorage.getItem('pending_fcm_token_github');
+    if (pin && pending) {
+        afficherDebug('⏰ Interval: PIN trouvé, envoi token...');
+        envoyerTokenFCMauServeur(pending);
+    }
+}, 2000);
 
 function obtenirEtEnvoyerToken() {
     afficherDebug('🚀 Génération token FCM...');
