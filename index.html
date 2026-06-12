@@ -233,82 +233,57 @@ function dismissNotifBanner() {
 }
 
 function obtenirEtEnvoyerToken() {
-    console.log('[FCM] 🚀 Début de getToken...');
+  console.log('[FCM] 🚀 Début getToken...');
+  
+  navigator.serviceWorker.ready.then(function(reg) {
+    console.log('[FCM] SW prêt:', reg.scope);
     
-    // Attendre que le SW soit prêt
-    navigator.serviceWorker.ready.then(function(reg) {
-        console.log('[FCM] SW prêt:', reg.scope);
-        
-        // ⚠️ Supprimer l'ancien abonnement push (ancienne VAPID key en cache)
-        return reg.pushManager.getSubscription().then(function(sub) {
-            if (sub) {
-                console.log('[FCM] 🗑️ Ancien abonnement trouvé, suppression...');
-                return sub.unsubscribe().then(function() {
-                    console.log('[FCM] ✅ Ancien abonnement supprimé');
-                    return reg;
-                });
-            }
-            return reg;
-        });
-    })
-    .then(function(reg) {
-        return messaging.getToken({ 
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: reg
-        });
-    })
-    .then(function(token) {
-        if (!token) { 
-            console.warn('[FCM] ❌ Pas de token généré'); 
-            return; 
-        }
-        console.log('[FCM] ✅ Token obtenu:', token.substring(0, 30) + '...');
-        localStorage.setItem('fcm_token', token);
-        console.log('[FCM] ✅ Token sauvegardé dans localStorage');
-        
-        var iframe = document.getElementById('app-frame');
-        
-        // 1. Tentative postMessage (souvent bloqué par sandbox Apps Script)
-        if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
-        }
-        
-        // 2. Méthode fiable : recharger l'iframe avec le token dans l'URL
-        // (une seule fois, avant connexion)
-        if (iframe && !localStorage.getItem('fcm_url_sent')) {
-            localStorage.setItem('fcm_url_sent', '1');
-            var baseSrc = iframe.src.split('?')[0].split('#')[0];
-            var sep = baseSrc.indexOf('?') === -1 ? '?' : '&';
-            console.log('[FCM] 🔄 Rechargement iframe avec token dans URL...');
-            iframe.src = baseSrc + sep + 'fcmtoken=' + encodeURIComponent(token);
-        }
-    })
-    .catch(function(err) { 
-        console.error('[FCM] ❌ getToken erreur:', err); 
-        console.error('[FCM] Détails:', err.message, err.code);
+    return reg.pushManager.getSubscription().then(function(sub) {
+      if (sub) return sub.unsubscribe().then(() => reg);
+      return reg;
     });
+  })
+  .then(function(reg) {
+    return messaging.getToken({ 
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: reg
+    });
+  })
+  .then(function(token) {
+    if (!token) {
+      afficherDebug('❌ Pas de token généré');
+      return;
+    }
+    afficherDebug('✅ Token OK: ' + token.substring(0, 20) + '...');
+    localStorage.setItem('fcm_token', token);
+    
+    var iframe = document.getElementById('app-frame');
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
+    }
+    if (iframe && !localStorage.getItem('fcm_url_sent')) {
+      localStorage.setItem('fcm_url_sent', '1');
+      var base = iframe.src.split('?')[0];
+      iframe.src = base + '?fcmtoken=' + encodeURIComponent(token);
+    }
+  })
+  .catch(function(err) {
+    afficherDebug('❌ Erreur: ' + err.message + ' | code: ' + err.code);
+  });
 }
 
-window.addEventListener('load', function() {
-    if (Notification.permission === 'granted') {
-        console.log('[FCM] Permission déjà accordée au chargement');
-        setTimeout(obtenirEtEnvoyerToken, 3000);
-    } else {
-        console.log('[FCM] Permission:', Notification.permission);
-    }
-    
-    // Debug : bouton pour forcer la génération du token
-    window.debugFCMToken = function() {
-        console.log('[DEBUG] Forçage du token...');
-        console.log('[DEBUG] Permission:', Notification.permission);
-        if (Notification.permission !== 'granted') {
-            console.warn('[DEBUG] Permission non accordée !');
-            return;
-        }
-        obtenirEtEnvoyerToken();
-    };
-    console.log('[DEBUG] Appelle window.debugFCMToken() pour forcer le token');
-});
+// Affiche un message visible sur mobile
+function afficherDebug(msg) {
+  console.log('[FCM]', msg);
+  var d = document.getElementById('fcm-debug');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'fcm-debug';
+    d.style = 'position:fixed;bottom:60px;left:10px;right:10px;background:rgba(0,0,0,0.85);color:#0f0;font-size:11px;padding:8px;border-radius:8px;z-index:99999;font-family:monospace;max-height:120px;overflow-y:auto;';
+    document.body.appendChild(d);
+  }
+  d.innerHTML += msg + '<br>';
+}
 
 // ══════════════════════════════════
 // PWA Install
