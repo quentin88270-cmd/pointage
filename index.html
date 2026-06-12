@@ -197,6 +197,48 @@ function dismissNotifBanner() {
     document.getElementById('notif-banner').style.display = 'none';
 }
 
+// ── Envoyer token FCM directement à Apps Script via fetch (sans iframe)
+function envoyerTokenFCMauServeur(token) {
+    // Récupérer le PIN depuis localStorage de l'iframe Apps Script
+    // On utilise un hack : lire depuis notre propre localStorage (GitHub Pages)
+    // Le PIN est stocké dans l'iframe (domaine different) donc inaccessible
+    // → On stocke une copie du PIN ici depuis l'iframe via postMessage
+    const pin = localStorage.getItem('mediaco_pin_github');
+    if (!pin) {
+        afficherDebug('⏳ PIN pas encore connu ici — attente...');
+        localStorage.setItem('pending_fcm_token_github', token);
+        return;
+    }
+    afficherDebug('📤 Envoi token FCM au serveur pour PIN ' + pin);
+    fetch('https://script.google.com/macros/s/AKfycbw2rKJ6ssrFiFKNcX8EwPTl4RFFueAOhlgcI64q0OhKwTZCmIdZCS0qdr3A-zTxN1GBfA/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'saveFCMToken', pin: pin, token: token })
+    })
+    .then(r => r.json())
+    .then(data => {
+        afficherDebug('✅ Serveur: ' + data.status);
+        if (data.status === 'OK') {
+            localStorage.removeItem('pending_fcm_token_github');
+        }
+    })
+    .catch(err => afficherDebug('❌ Fetch erreur: ' + err.message));
+}
+
+// Recevoir le PIN depuis l'iframe Apps Script
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'MEDIACO_PIN') {
+        const pin = event.data.pin;
+        if (pin) {
+            localStorage.setItem('mediaco_pin_github', pin);
+            afficherDebug('📌 PIN reçu: ' + pin);
+            // Si token en attente → envoyer maintenant
+            const pending = localStorage.getItem('pending_fcm_token_github');
+            if (pending) envoyerTokenFCMauServeur(pending);
+        }
+    }
+});
+
 function obtenirEtEnvoyerToken() {
     afficherDebug('🚀 Génération token FCM...');
     navigator.serviceWorker.ready.then(function(reg) {
@@ -220,16 +262,13 @@ function obtenirEtEnvoyerToken() {
         afficherDebug('✅ Token: ' + token.substring(0, 25) + '...');
         localStorage.setItem('fcm_token', token);
 
-        // Envoyer au serveur Apps Script via postMessage
-        var iframe = document.getElementById('app-frame');
-        if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage({ type: 'FCM_TOKEN', token: token }, '*');
-            afficherDebug('📨 postMessage envoyé');
-        }
+        // Méthode 1 : fetch direct vers Apps Script (le plus fiable)
+        envoyerTokenFCMauServeur(token);
 
-        // Fallback : recharger iframe avec token dans URL
-        if (iframe && !localStorage.getItem('fcm_url_sent')) {
-            localStorage.setItem('fcm_url_sent', '1');
+        // Méthode 2 : recharger l'iframe avec token dans l'URL → doGet l'injecte via template
+        var iframe = document.getElementById('app-frame');
+        if (iframe) {
+            localStorage.removeItem('fcm_url_sent');
             var base = iframe.src.split('?')[0];
             iframe.src = base + '?fcmtoken=' + encodeURIComponent(token);
             afficherDebug('🔄 Iframe rechargée avec token URL');
