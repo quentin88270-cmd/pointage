@@ -100,19 +100,6 @@ function hideLoader() {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('app-frame').style.display = 'block';
 
-    // Si token FCM déjà en localStorage → recharger l'iframe avec le token dans l'URL
-    const tokenExistant = localStorage.getItem('fcm_token');
-    const iframe = document.getElementById('app-frame');
-    if (tokenExistant && iframe) {
-        const base = iframe.src.split('?')[0];
-        const src  = base + '?fcmtoken=' + encodeURIComponent(tokenExistant);
-        if (iframe.src !== src) {
-            afficherDebug('🔄 Token existant → rechargement iframe avec token URL');
-            iframe.src = src;
-            return; // hideLoader sera rappelé par onload
-        }
-    }
-
     setTimeout(function() {
         // Attendre que l'utilisateur soit connecté (PIN présent) avant de demander les notifs
         const pinConnecte = localStorage.getItem('mediaco_pin');
@@ -262,17 +249,10 @@ function obtenirEtEnvoyerToken() {
         afficherDebug('✅ Token: ' + token.substring(0, 25) + '...');
         localStorage.setItem('fcm_token', token);
 
-        // Méthode 1 : fetch direct vers Apps Script (le plus fiable)
+        // Stocker le token localement et tenter envoi si PIN connu
+        localStorage.setItem('pending_fcm_token_github', token);
+        afficherDebug('💾 Token stocké localement');
         envoyerTokenFCMauServeur(token);
-
-        // Méthode 2 : recharger l'iframe avec token dans l'URL → doGet l'injecte via template
-        var iframe = document.getElementById('app-frame');
-        if (iframe) {
-            localStorage.removeItem('fcm_url_sent');
-            var base = iframe.src.split('?')[0];
-            iframe.src = base + '?fcmtoken=' + encodeURIComponent(token);
-            afficherDebug('🔄 Iframe rechargée avec token URL');
-        }
     })
     .catch(function(err) {
         afficherDebug('❌ ' + err.message + (err.code ? ' [' + err.code + ']' : ''));
