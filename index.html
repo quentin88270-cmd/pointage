@@ -408,7 +408,7 @@ function installerApp() {
         var hint   = document.getElementById('pwa-ios-hint');
         if (banner) banner.style.display = 'block';
         if (hint) {
-            hint.innerHTML = 'Sur <strong>Android</strong> : appuie sur ⋮ <strong>Menu</strong><br>puis <strong>"Ajouter à l'écran d'accueil"</strong> ➕<br><span class="pwa-hint-btn" onclick="dismissPWA()">J'ai compris ✓</span>';
+            hint.innerHTML = "Sur <strong>Android</strong> : appuie sur &#8942; <strong>Menu</strong><br>puis <strong>Ajouter &agrave; l&apos;&eacute;cran d&apos;accueil</strong> &#10133;<br><span class=\"pwa-hint-btn\" onclick=\"dismissPWA()\">J&apos;ai compris &#10003;</span>";
             hint.style.display = 'block';
         }
         var installBtn = document.getElementById('pwa-install-btn');
@@ -445,9 +445,9 @@ function showInstallBanner() {
         banner.style.display = 'block';
         document.getElementById('pwa-install-btn').style.display = 'none';
         document.getElementById('pwa-ios-hint').innerHTML =
-            'Sur <strong>Android</strong> : appuie sur ⋮ <strong>Menu</strong><br>' +
-            'puis <strong>"Ajouter à l\'écran d\'accueil"</strong> ➕' +
-            '<br><span class="pwa-hint-btn" onclick="dismissPWA()">J\'ai compris ✓</span>' +
+            'Sur <strong>Android</strong> : Menu &#8942;<br>' +
+            'puis <strong>Ajouter &agrave; l&apos;&eacute;cran d&apos;accueil</strong> &#10133;' +
+            '<br><span class="pwa-hint-btn" onclick="dismissPWA()">J&apos;ai compris &#10003;</span>' +
             '<span class="pwa-hint-never" onclick="dismissPWAForever()">Ne plus me demander</span>';
         document.getElementById('pwa-ios-hint').style.display = 'block';
     }
