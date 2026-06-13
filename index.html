@@ -336,22 +336,14 @@ function isStandalone() {
 window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault(); _deferredInstall = e;
     // Vérifier toutes les 2s si le PIN est connecté, puis afficher
-    var checkPin = setInterval(function() {
-        if (localStorage.getItem('mediaco_pin_github')) {
-            clearInterval(checkPin);
-            setTimeout(showInstallBanner, 2000);
-        }
-    }, 2000);
-    setTimeout(function() { clearInterval(checkPin); }, 300000);
+    setTimeout(showInstallBanner, 2000);
 });
 
 function showInstallBanner() {
     if (isStandalone()) return;
-    if (localStorage.getItem('pwa_installed')) return; // déjà installé
-    // Ne pas afficher si déjà refusé cette session
+    if (localStorage.getItem('pwa_installed')) return;
     if (sessionStorage.getItem('pwa_dismissed_session')) return;
-    // Ne pas afficher si pas encore connecté
-    if (!localStorage.getItem('mediaco_pin_github')) return;
+    // Afficher même sans PIN — le banner PWA ne nécessite pas de connexion
     var banner = document.getElementById('pwa-install-banner');
     if (!banner) return;
     if (isIOS()) {
@@ -382,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     document.getElementById('pwa-dismiss-btn').addEventListener('click', dismissPWAForever);
-    if (isIOS() && !isStandalone() && !sessionStorage.getItem('pwa_dismissed_session') && localStorage.getItem('mediaco_pin_github')) {
+    if (isIOS() && !isStandalone() && !sessionStorage.getItem('pwa_dismissed_session')) {
         setTimeout(showInstallBanner, 3000);
     }
 });
